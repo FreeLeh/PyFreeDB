@@ -9,7 +9,7 @@ from .base import SheetAPI
 logger = logging.getLogger(__name__)
 
 
-class GoogleSheetKVStore(KVStore):
+class AppendOnlyGoogleSheetKVStore(KVStore):
     def __init__(
         self,
         sheet_api: SheetAPI,
