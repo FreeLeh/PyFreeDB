@@ -8,7 +8,7 @@ from google.oauth2.credentials import Credentials
 @dataclasses.dataclass
 class MutationResult:
     range: str
-    values: List[List[str]]
+    values: Optional[List[List[str]]] = None
 
 
 class GoogleAuthClient(abc.ABC):

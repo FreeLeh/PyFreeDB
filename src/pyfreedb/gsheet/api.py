@@ -37,7 +37,7 @@ class GoogleSheetAPI(SheetAPI):
 
         return MutationResult(
             range=result["updates"]["updatedRange"],
-            values=result["updates"]["updatedData"]["values"],
+            values=result["updates"]["updatedData"].get("values", None),
         )
 
     def update(self, spreadsheet_id: str, range: str, values: List[List[str]]) -> MutationResult:
@@ -51,7 +51,7 @@ class GoogleSheetAPI(SheetAPI):
         ).execute()
         logger.debug("update result=%s", result)
 
-        return MutationResult(range=result["updatedRange"], values=result["updatedData"]["values"])
+        return MutationResult(range=result["updatedRange"], values=result["updatedData"].get("values", None))
 
     def clear(self, spreadsheet_id: str, range: str) -> None:
         result = self._api.clear(spreadsheetId=spreadsheet_id, range=range).execute()

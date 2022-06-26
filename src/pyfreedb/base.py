@@ -12,19 +12,19 @@ class Codec(abc.ABC):
 class KVStore(abc.ABC):
     @abc.abstractmethod
     def get(self, key: str) -> bytes:
-        return NotImplementedError
+        pass
 
     @abc.abstractmethod
     def set(self, key: str, data: bytes) -> None:
-        return NotImplementedError
+        pass
 
     @abc.abstractmethod
     def delete(self, key: str) -> None:
-        return NotImplementedError
+        pass
 
     @abc.abstractmethod
     def close(self) -> None:
-        return NotImplementedError
+        pass
 
 
 class KeyNotFoundError(ValueError):

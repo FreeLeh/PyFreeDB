@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Optional
 
 from ..base import Codec, KeyNotFoundError, KVStore
 from ..codec import BasicCodec
@@ -14,9 +13,9 @@ class AppendOnlyGoogleSheetKVStore(KVStore):
         self,
         sheet_api: SheetAPI,
         spreadsheet_id: str,
-        data_sheet_name: Optional[str] = "Data",
-        scratchpad_sheet_name: Optional[str] = "Scratchpad",
-        codec: Optional[Codec] = BasicCodec(),
+        data_sheet_name: str = "Data",
+        scratchpad_sheet_name: str = "Scratchpad",
+        codec: Codec = BasicCodec(),
     ):
         self._sheet_api = sheet_api
         self._spreadsheet_id = spreadsheet_id
@@ -38,6 +37,9 @@ class AppendOnlyGoogleSheetKVStore(KVStore):
         else:
             result = self._sheet_api.update(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
 
+        if not result.values:
+            raise KeyNotFoundError(key)
+
         value = result.values[0][0]
         if value == "#N/A":
             raise KeyNotFoundError(key)
@@ -45,17 +47,25 @@ class AppendOnlyGoogleSheetKVStore(KVStore):
         return self._codec.decode(value)
 
     def set(self, key: str, data: bytes) -> None:
-        ts = int(time.time() * 1000)
         value = self._codec.encode(data)
+        self._set(key, value)
+
+    def _set(self, key: str, data: str) -> None:
+        ts = int(time.time() * 1000)
         self._sheet_api.append(
             self._spreadsheet_id,
             "{data_sheet}!A2".format(data_sheet=self._sheet_name),
-            [[key, value, ts]],
+            [[key, data, ts]],
         )
 
     def delete(self, key: str) -> None:
-        self.set(key, "")
+        self._set(key, "")
 
     def close(self) -> None:
         if self._scratchpad_cell:
             self._sheet_api.clear(self._spreadsheet_id, self._scratchpad_cell)
+
+
+class GoogleSheetKVStore(KVStore):
+    def get(self, key: str) -> bytes:
+        pass
