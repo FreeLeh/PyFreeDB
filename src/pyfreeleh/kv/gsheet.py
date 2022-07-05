@@ -1,19 +1,13 @@
 import time
 from typing import Any, Callable, List
 
-from pyfreeleh.base import KVStore
-from pyfreeleh.codec import BasicCodec, Codec
+from pyfreeleh.base import KVStore, Codec
+from pyfreeleh.codec import BasicCodec
 from pyfreeleh.google.auth.base import GoogleAuthClient
 from pyfreeleh.google.sheet.base import A1Range, CellSelector
 from pyfreeleh.google.sheet.wrapper import GoogleSheetWrapper
 
-
-class KeyNotFound(Exception):
-    pass
-
-
-class InvalidOperation(Exception):
-    pass
+from .base import InvalidOperationError, KeyNotFoundError
 
 
 class GoogleSheetKVStore(KVStore):
@@ -28,8 +22,8 @@ class GoogleSheetKVStore(KVStore):
         auth_client: GoogleAuthClient,
         spreadsheet_id: str,
         sheet_name: str,
-        codec=BasicCodec(),
-        mode=DEFAULT_MODE,
+        codec:Codec=BasicCodec(),
+        mode: int=DEFAULT_MODE,
     ):
         self._auth_client = auth_client
         self._spreadsheet_id = spreadsheet_id
@@ -92,7 +86,7 @@ class GoogleSheetKVStore(KVStore):
         ts = int(time.time() * 1000)
         strategy(key, value_enc, ts)
 
-    def _get_set_strategy(self) -> Callable[[str, str], None]:
+    def _get_set_strategy(self) -> Callable[[str, str, int], None]:
         if self._mode == self.DEFAULT_MODE:
             return self._default_set
 
@@ -105,7 +99,7 @@ class GoogleSheetKVStore(KVStore):
         try:
             key_range = self._find_key_a1range(key)
             self._wrapper.update_rows(self._spreadsheet_id, key_range, [[key, data, ts]])
-        except KeyNotFound:
+        except KeyNotFoundError:
             self._wrapper.overwrite_rows(
                 self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]]
             )
@@ -117,16 +111,16 @@ class GoogleSheetKVStore(KVStore):
         row_idx = str(self._ensure_values(resp.updated_values))
         return A1Range(self._sheet_name, CellSelector(row=row_idx), CellSelector(row=row_idx))
 
-    def _append_only_set(self, key: str, data: bytes, ts: int) -> None:
+    def _append_only_set(self, key: str, data: str, ts: int) -> None:
         self._wrapper.insert_rows(self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]])
 
-    def _ensure_values(self, values: List[List[Any]]) -> str:
+    def _ensure_values(self, values: List[List[Any]]) -> Any:
         if not values or not values[0]:
-            raise KeyNotFound
+            raise KeyNotFoundError
 
         value = values[0][0]
         if not value or value == self.NA_VALUE:
-            raise KeyNotFound
+            raise KeyNotFoundError
 
         return value
 
@@ -142,7 +136,7 @@ class GoogleSheetKVStore(KVStore):
     def _default_delete(self, key: str) -> None:
         try:
             r = self._find_key_a1range(key)
-        except KeyNotFound:
+        except KeyNotFoundError:
             return
 
         self._wrapper.clear(self._spreadsheet_id, [r])
@@ -151,12 +145,12 @@ class GoogleSheetKVStore(KVStore):
         ts = int(time.time() * 1000)
         self._append_only_set(key, "", ts)
 
-    def close(self):
+    def close(self) -> None:
         self._ensure_initialised()
 
         self._wrapper.clear(self._spreadsheet_id, [self._scratchpad_cell])
         self._closed = True
 
-    def _ensure_initialised(self):
+    def _ensure_initialised(self) -> None:
         if self._closed:
-            raise InvalidOperation
+            raise InvalidOperationError

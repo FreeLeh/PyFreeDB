@@ -10,7 +10,7 @@ class CellSelector:
     row: str = ""
 
     @classmethod
-    def from_notation(cls, notation) -> "CellSelector":
+    def from_notation(cls, notation: str) -> "CellSelector":
         column, row = notation, ""
 
         for i, c in enumerate(notation):
@@ -34,7 +34,7 @@ class A1Range:
     end: Optional[CellSelector] = None
 
     @classmethod
-    def from_notation(cls, notation):
+    def from_notation(cls, notation: str) -> "A1Range":
         sheet_name = ""
         if "!" in notation:
             # notation="Sheet1!A1:B2" -> sheet_name=Sheet1

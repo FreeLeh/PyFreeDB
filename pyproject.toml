@@ -9,3 +9,7 @@ profile = "black"
 line-length = 120
 target-version = ['py36', 'py37', 'py38']
 include = '\.pyi?$'
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true

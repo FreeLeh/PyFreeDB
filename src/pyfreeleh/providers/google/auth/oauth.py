@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -17,7 +17,9 @@ class OAuth2GoogleAuthClient(GoogleAuthClient):
         self._creds = creds
 
     @classmethod
-    def from_authorized_user_info(cls, authorized_user_info: dict, scopes: Optional[List[str]] = None):
+    def from_authorized_user_info(
+        cls, authorized_user_info: Dict[str, str], scopes: Optional[List[str]] = None
+    ) -> "OAuth2GoogleAuthClient":
         creds = Credentials.from_authorized_user_info(authorized_user_info, scopes=scopes)
         return cls(creds)
 

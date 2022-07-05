@@ -1,4 +1,4 @@
-from .wrapper import A1Range, CellSelector
+from pyfreeleh.google.sheet.base import A1Range, CellSelector
 
 
 def test_cell_selector():

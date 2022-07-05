@@ -27,7 +27,9 @@ class KVStore(abc.ABC):
         pass
 
 
-class KeyNotFoundError(ValueError):
-    def __init__(self, key):
-        self._key = key
-        super().__init__()
+class KeyNotFoundError(Exception):
+    pass
+
+
+class InvalidOperationError(Exception):
+    pass

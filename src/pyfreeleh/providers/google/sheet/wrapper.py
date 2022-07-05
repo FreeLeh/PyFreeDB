@@ -18,7 +18,7 @@ class GoogleSheetWrapper:
 
     def create_spreadsheet(self, title: str) -> str:
         resp = self._svc.create(body={"properties": {"title": title}}).execute()
-        return resp["spreadsheetId"]
+        return str(resp["spreadsheetId"])
 
     def create_sheet(self, spreadsheet_id: str, sheet_name: str) -> None:
         self._svc.batchUpdate(
