@@ -1,6 +1,7 @@
 import time
 from typing import Any, Callable, List
 
+from pyfreeleh.base import KVStore
 from pyfreeleh.codec import BasicCodec, Codec
 from pyfreeleh.google.auth.base import GoogleAuthClient
 from pyfreeleh.google.sheet.base import A1Range, CellSelector
@@ -11,7 +12,11 @@ class KeyNotFound(Exception):
     pass
 
 
-class GoogleSheetKVStore:
+class InvalidOperation(Exception):
+    pass
+
+
+class GoogleSheetKVStore(KVStore):
     DEFAULT_MODE = 0
     APPEND_ONLY_MODE = 1
     SCRATCHPAD_SUFFIX = "_scratch"
@@ -36,6 +41,7 @@ class GoogleSheetKVStore:
         self._wrapper = GoogleSheetWrapper(auth_client)
         self._ensure_sheet()
         self._book_scratchpad_cell()
+        self._closed = False
 
     def _ensure_sheet(self) -> None:
         try:
@@ -58,11 +64,12 @@ class GoogleSheetKVStore:
         self._scratchpad_cell = result.updated_range
 
     def get(self, key: str) -> bytes:
+        self._ensure_initialised()
+
         formula = self._get_formula(key)
 
         resp = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
         value = self._ensure_values(resp.updated_values)
-        print(value)
         return self._codec.decode(value)
 
     def _get_formula(self, key: str) -> str:
@@ -77,6 +84,8 @@ class GoogleSheetKVStore:
         assert False, "unrecognised mode"
 
     def set(self, key: str, value: bytes) -> None:
+        self._ensure_initialised()
+
         strategy = self._get_set_strategy()
 
         value_enc = self._codec.encode(value)
@@ -95,7 +104,6 @@ class GoogleSheetKVStore:
     def _default_set(self, key: str, data: str, ts: int) -> None:
         try:
             key_range = self._find_key_a1range(key)
-            print(key_range)
             self._wrapper.update_rows(self._spreadsheet_id, key_range, [[key, data, ts]])
         except KeyNotFound:
             self._wrapper.overwrite_rows(
@@ -121,3 +129,34 @@ class GoogleSheetKVStore:
             raise KeyNotFound
 
         return value
+
+    def delete(self, key: str) -> None:
+        self._ensure_initialised()
+
+        if self._mode == self.DEFAULT_MODE:
+            self._default_delete(key)
+
+        if self._mode == self.APPEND_ONLY_MODE:
+            self._append_only_delete(key)
+
+    def _default_delete(self, key: str) -> None:
+        try:
+            r = self._find_key_a1range(key)
+        except KeyNotFound:
+            return
+
+        self._wrapper.clear(self._spreadsheet_id, [r])
+
+    def _append_only_delete(self, key: str) -> None:
+        ts = int(time.time() * 1000)
+        self._append_only_set(key, "", ts)
+
+    def close(self):
+        self._ensure_initialised()
+
+        self._wrapper.clear(self._spreadsheet_id, [self._scratchpad_cell])
+        self._closed = True
+
+    def _ensure_initialised(self):
+        if self._closed:
+            raise InvalidOperation
