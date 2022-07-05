@@ -1,16 +1,16 @@
 import time
 from typing import Any, Callable, List
 
-from pyfreeleh.base import Codec, KVStore
+from pyfreeleh.base import Codec, InvalidOperationError
 from pyfreeleh.codec import BasicCodec
-from pyfreeleh.google.auth.base import GoogleAuthClient
-from pyfreeleh.google.sheet.base import A1Range, CellSelector
-from pyfreeleh.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreeleh.providers.google.auth.base import GoogleAuthClient
+from pyfreeleh.providers.google.sheet.base import A1Range, CellSelector
+from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 
-from .base import InvalidOperationError, KeyNotFoundError
+from .base import KV, KeyNotFoundError
 
 
-class GoogleSheetKVStore(KVStore):
+class GoogleSheetKV(KV):
     DEFAULT_MODE = 0
     APPEND_ONLY_MODE = 1
     SCRATCHPAD_SUFFIX = "_scratch"

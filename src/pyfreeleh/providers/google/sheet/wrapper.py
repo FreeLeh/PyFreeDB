@@ -2,7 +2,7 @@ from typing import Any, List
 
 from googleapiclient.discovery import build
 
-from pyfreeleh.google.auth.base import GoogleAuthClient
+from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 
 from .base import A1Range, InsertRowsResult, UpdateRowsResult
 

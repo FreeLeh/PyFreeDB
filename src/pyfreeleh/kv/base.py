@@ -1,14 +1,6 @@
 import abc
 
 
-class Codec(abc.ABC):
-    def encode(self, data: bytes) -> str:
-        pass
-
-    def decode(self, data: str) -> bytes:
-        pass
-
-
 class KV(abc.ABC):
     @abc.abstractmethod
     def get(self, key: str) -> bytes:
@@ -28,8 +20,4 @@ class KV(abc.ABC):
 
 
 class KeyNotFoundError(Exception):
-    pass
-
-
-class InvalidOperationError(Exception):
     pass
