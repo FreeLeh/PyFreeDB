@@ -33,5 +33,5 @@ class SheetAPI(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def clear(self, spreadsheet_id: str, range: str) -> None:
+    def clear(self, spreadsheet_id: str, ranges: List[str]) -> None:
         raise NotImplementedError

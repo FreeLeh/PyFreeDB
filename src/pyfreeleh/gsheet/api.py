@@ -53,6 +53,6 @@ class GoogleSheetAPI(SheetAPI):
 
         return MutationResult(range=result["updatedRange"], values=result["updatedData"].get("values", None))
 
-    def clear(self, spreadsheet_id: str, range: str) -> None:
-        result = self._api.clear(spreadsheetId=spreadsheet_id, range=range).execute()
+    def clear(self, spreadsheet_id: str, ranges: List[str]) -> None:
+        result = self._api.batchClear(spreadsheetId=spreadsheet_id, body={"ranges": ranges}).execute()
         logger.debug("clear result=%s", result)
