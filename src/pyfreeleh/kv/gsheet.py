@@ -1,7 +1,7 @@
 import time
 from typing import Any, Callable, List
 
-from pyfreeleh.base import KVStore, Codec
+from pyfreeleh.base import Codec, KVStore
 from pyfreeleh.codec import BasicCodec
 from pyfreeleh.google.auth.base import GoogleAuthClient
 from pyfreeleh.google.sheet.base import A1Range, CellSelector
@@ -22,8 +22,8 @@ class GoogleSheetKVStore(KVStore):
         auth_client: GoogleAuthClient,
         spreadsheet_id: str,
         sheet_name: str,
-        codec:Codec=BasicCodec(),
-        mode: int=DEFAULT_MODE,
+        codec: Codec = BasicCodec(),
+        mode: int = DEFAULT_MODE,
     ):
         self._auth_client = auth_client
         self._spreadsheet_id = spreadsheet_id

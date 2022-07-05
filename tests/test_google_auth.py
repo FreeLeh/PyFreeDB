@@ -3,8 +3,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from pyfreeleh.google.auth.oauth import OAuth2GoogleAuthClient
-from pyfreeleh.google.auth.service_account import ServiceAccountGoogleAuthClient
+from pyfreeleh.providers.google.auth.oauth import OAuth2GoogleAuthClient
+from pyfreeleh.providers.google.auth.service_account import (
+    ServiceAccountGoogleAuthClient,
+)
 
 user_secret_info = {
     "token": "token",

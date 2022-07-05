@@ -3,7 +3,7 @@ from textwrap import wrap
 
 from attr import s
 
-from pyfreeleh.google.auth.oauth import OAuth2GoogleAuthClient
+from pyfreeleh.providers.google import OAuth2GoogleAuthClient
 from pyfreeleh.kv import GoogleSheetKVStore
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
