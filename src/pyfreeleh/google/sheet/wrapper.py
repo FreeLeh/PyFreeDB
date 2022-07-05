@@ -4,13 +4,14 @@ from googleapiclient.discovery import build
 
 from pyfreeleh.google.auth.base import GoogleAuthClient
 
-from .base import A1Range, InsertRowsResult
-
-APPEND_MODE_OVERWRITE = "OVERWRITE"
-APPEND_MODE_INSERT = "INSERT_ROWS"
+from .base import A1Range, InsertRowsResult, UpdateRowsResult
 
 
 class GoogleSheetWrapper:
+    APPEND_MODE_OVERWRITE = "OVERWRITE"
+    APPEND_MODE_INSERT = "INSERT_ROWS"
+    MAJOR_DIMENSION_ROWS = "ROWS"
+
     def __init__(self, auth_client: GoogleAuthClient):
         service = build("sheets", "v4", credentials=auth_client.credentials())
         self._svc = service.spreadsheets()
@@ -25,10 +26,10 @@ class GoogleSheetWrapper:
         ).execute()
 
     def insert_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
-        return self._insert_rows(spreadsheet_id, range, values, APPEND_MODE_INSERT)
+        return self._insert_rows(spreadsheet_id, range, values, self.APPEND_MODE_INSERT)
 
     def overwrite_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
-        return self._insert_rows(spreadsheet_id, range, values, APPEND_MODE_OVERWRITE)
+        return self._insert_rows(spreadsheet_id, range, values, self.APPEND_MODE_OVERWRITE)
 
     def _insert_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]], mode: str) -> InsertRowsResult:
         resp = (
@@ -57,3 +58,23 @@ class GoogleSheetWrapper:
         self._svc.values().batchClear(
             spreadsheetId=spreadsheet_id, body={"ranges": [r.notation for r in ranges]}
         ).execute()
+
+    def update_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> UpdateRowsResult:
+        resp = (
+            self._svc.values().update(
+                spreadsheetId=spreadsheet_id,
+                range=range.notation,
+                includeValuesInResponse="true",
+                responseValueRenderOption="FORMATTED_VALUE",
+                valueInputOption="USER_ENTERED",
+                body={"majorDimension": self.MAJOR_DIMENSION_ROWS, "range": range.notation, "values": values},
+            )
+        ).execute()
+
+        return UpdateRowsResult(
+            updated_range=A1Range.from_notation(resp["updatedRange"]),
+            updated_rows=resp["updatedRows"],
+            updated_columns=resp["updatedColumns"],
+            updated_cells=resp["updatedCells"],
+            updated_values=resp["updatedData"]["values"],
+        )

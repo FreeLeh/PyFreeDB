@@ -77,3 +77,12 @@ class InsertRowsResult:
     updated_columns: int
     updated_cells: int
     inserted_values: List[List[Any]]
+
+
+@dataclass
+class UpdateRowsResult:
+    updated_range: A1Range
+    updated_rows: int
+    updated_columns: int
+    updated_cells: int
+    updated_values: List[List[Any]]
