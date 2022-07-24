@@ -1,16 +1,35 @@
+import string
 from dataclasses import dataclass
 from typing import Any, List, Optional
 
 
+def to_a1_column(col_idx: int) -> str:
+    result = []
+    while col_idx:
+        cur = (col_idx - 1) % 26
+        result.append(string.ascii_uppercase[cur])
+        col_idx = (col_idx - cur) // 26
+
+    return "".join(result[::-1])
+
+
 @dataclass
-class CellSelector:
+class A1CellSelector:
     # "" means we select the entire column.
     column: str = ""
-    # "" means we select the entire row.
-    row: str = ""
+    # 0 means we select the entire row.
+    row: int = 0
 
     @classmethod
-    def from_notation(cls, notation: str) -> "CellSelector":
+    def from_rc(cls, column: str = "", row: int = 0) -> "A1CellSelector":
+        column_str = ""
+        if column:
+            column_str = to_a1_column(column)
+
+        return cls(row=row, column=column_str)
+
+    @classmethod
+    def from_notation(cls, notation: str) -> "A1CellSelector":
         column, row = notation, ""
 
         for i, c in enumerate(notation):
@@ -23,15 +42,19 @@ class CellSelector:
 
     @property
     def notation(self) -> str:
-        return self.column + self.row
+        row = ""
+        if self.row:
+            row = str(self.row)
+
+        return self.column + row
 
 
 @dataclass
 class A1Range:
     sheet_name: str = ""
     # If both start and end equals to None, means that the range refers to all cells.
-    start: Optional[CellSelector] = None
-    end: Optional[CellSelector] = None
+    start: Optional[A1CellSelector] = None
+    end: Optional[A1CellSelector] = None
 
     @classmethod
     def from_notation(cls, notation: str) -> "A1Range":
@@ -50,11 +73,11 @@ class A1Range:
         if notation != "":
             if ":" in notation:
                 start_raw, end_raw = notation.split(":")
-                start = CellSelector.from_notation(start_raw)
-                end = CellSelector.from_notation(end_raw)
+                start = A1CellSelector.from_notation(start_raw)
+                end = A1CellSelector.from_notation(end_raw)
             else:
-                start = CellSelector(notation)
-                end = CellSelector(notation)
+                start = A1CellSelector(notation)
+                end = A1CellSelector(notation)
 
         return cls(sheet_name=sheet_name, start=start, end=end)
 

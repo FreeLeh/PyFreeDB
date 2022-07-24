@@ -4,7 +4,7 @@ from typing import Any, Callable, List
 from pyfreeleh.base import Codec, InvalidOperationError
 from pyfreeleh.codec import BasicCodec
 from pyfreeleh.providers.google.auth.base import GoogleAuthClient
-from pyfreeleh.providers.google.sheet.base import A1Range, CellSelector
+from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 
 from .base import KeyNotFoundError, KVStore
@@ -109,7 +109,7 @@ class GoogleSheetKVStore(KVStore):
         resp = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
 
         row_idx = str(self._ensure_values(resp.updated_values))
-        return A1Range(self._sheet_name, CellSelector(row=row_idx), CellSelector(row=row_idx))
+        return A1Range(self._sheet_name, A1CellSelector(row=row_idx), A1CellSelector(row=row_idx))
 
     def _append_only_set(self, key: str, data: str, ts: int) -> None:
         self._wrapper.insert_rows(self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]])

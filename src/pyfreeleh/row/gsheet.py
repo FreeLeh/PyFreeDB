@@ -1,19 +1,12 @@
-from ast import Delete
-import functools
-from enum import Enum
-import json
-import time
-from re import A
-from typing import Any, Dict, List, Optional, Tuple
 import string
+import time
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
-from isort import code
-from pyparsing import col
 from pyfreeleh.base import Codec, InvalidOperationError
 from pyfreeleh.codec import BasicCodec
 from pyfreeleh.providers.google.auth.base import GoogleAuthClient
-
-from pyfreeleh.providers.google.sheet.base import A1Range, BatchUpdateRowsRequest, CellSelector
+from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 
 
@@ -49,12 +42,14 @@ class QueryBuilder:
 
     # TODO(fata.nugraha): find better interface to do this (maybe follow django/sqlalchemy style?).
     def _build_where(self) -> str:
-        if not self._where:
-            return ""
+        where = self._where
+        if not where:
+            # Make it true.
+            where = "1 = 1", ()
 
         # This is not 100% foolproof. Might cause some weird issues if we have field that follows gsheet
         # column naming format e.g. A, B, etc. need to find better way.
-        cond, args = self.WHERE_TEMPLATE.format(self.TS_FIELD, self._where[0]), self._where[1]
+        cond, args = self.WHERE_TEMPLATE.format(self.TS_FIELD, where[0]), where[1]
         for field, col in self._col_mapping.items():
             cond = cond.replace(field, col)
 
@@ -216,8 +211,9 @@ class InsertStmt:
             result.append(row.get(col, ""))
         return result
 
+
 class UpdateStmt:
-    INDICES_FORMULA_TEMPLATE = '=JOIN(",", ARRAYFORMULA(QUERY({{{}, ROW({})}}, "{}")))'
+    INDICES_FORMULA_TEMPLATE = '=JOIN(",", ARRAYFORMULA(QUERY({{{data_range}, ROW({data_range})}}, "{query}")))'
     ROW_IDX_FIELD = "_idx"
 
     def __init__(
@@ -227,7 +223,7 @@ class UpdateStmt:
         sheet_name: str,
         scratchpad_cell: A1Range,
         columns: List[str],
-        update_values: Dict[str,str]
+        update_values: Dict[str, str],
     ):
         self._val = update_values
         self._wrapper = wrapper
@@ -236,7 +232,7 @@ class UpdateStmt:
         self._scratchpad_cell = scratchpad_cell
         self._columns = columns
 
-        c1_col_mapping = get_c1_column_mapping(self._columns + [self.ROW_IDX_FIELD])
+        c1_col_mapping = get_col_idx_column_mapping(self._columns + [self.ROW_IDX_FIELD])
         self._query = QueryBuilder(c1_col_mapping)
 
     def where(self, condition, *args) -> "UpdateStmt":
@@ -244,9 +240,9 @@ class UpdateStmt:
         return self
 
     def execute(self):
-        location = A1Range(self._sheet_name, CellSelector(to_a1_column(1), "2"), CellSelector(to_a1_column(len(self._columns)))).notation
+        data_range = A1Range(self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(len(self._columns)))
         query = self._query.build_select([self.ROW_IDX_FIELD]).replace('"', '""')
-        formula = self.INDICES_FORMULA_TEMPLATE.format(location, location, query)
+        formula = self.INDICES_FORMULA_TEMPLATE.format(data_range=data_range.notation, query=query)
 
         result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
         update_candidate_indices = [int(idx) for idx in result.updated_values[0][0].split(",") if idx]
@@ -257,18 +253,10 @@ class UpdateStmt:
                 if col not in self._val:
                     continue
 
-                requests.append(
-                    BatchUpdateRowsRequest(
-                        A1Range(
-                            self._sheet_name,
-                            CellSelector(to_a1_column(col_idx+1), str(row_idx)),
-                            CellSelector(to_a1_column(col_idx+1), str(row_idx))
-                        ),
-                        [[self._val[col]]]
-                    )
-                )
+                cell_selector = A1CellSelector.from_rc(col_idx + 1, row_idx)
+                update_range = A1Range(self._sheet_name, cell_selector, cell_selector)
+                requests.append(BatchUpdateRowsRequest(update_range, [[self._val[col]]]))
 
-        # print(requests)
         self._wrapper.batch_update_rows(self._spreadsheet_id, requests)
 
 
@@ -290,7 +278,7 @@ class DeleteStmt:
         self._scratchpad_cell = scratchpad_cell
         self._columns = columns
 
-        c1_col_mapping = get_c1_column_mapping(self._columns + [self.ROW_IDX_FIELD])
+        c1_col_mapping = get_col_idx_column_mapping(self._columns + [self.ROW_IDX_FIELD])
         self._query = QueryBuilder(c1_col_mapping)
 
     def where(self, condition, *args) -> "DeleteStmt":
@@ -298,25 +286,22 @@ class DeleteStmt:
         return self
 
     def execute(self):
-        location = A1Range(self._sheet_name, CellSelector(to_a1_column(1), "2"), CellSelector(to_a1_column(len(self._columns)))).notation
+        location = A1Range(
+            self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(column=len(self._columns))
+        ).notation
         query = self._query.build_select([self.ROW_IDX_FIELD]).replace('"', '""')
         formula = self.INDICES_FORMULA_TEMPLATE.format(location, location, query)
 
         result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
         update_candidate_indices = [int(idx) for idx in result.updated_values[0][0].split(",") if idx]
+        print(update_candidate_indices)
 
         requests = []
         for row_idx in update_candidate_indices:
-            requests.append(
-                A1Range(
-                    self._sheet_name,
-                    CellSelector("", str(row_idx)),
-                    CellSelector("", str(row_idx))
-                ),
-            )
+            row_selector=A1CellSelector.from_rc(row=row_idx)
+            requests.append( A1Range(self._sheet_name, start=row_selector, end=row_selector))
 
         self._wrapper.clear(self._spreadsheet_id, requests)
-
 
 
 class GoogleSheetRowStore:
@@ -324,7 +309,8 @@ class GoogleSheetRowStore:
     SCRATCHPAD_SUFFIX = "_scratch"
     TS_COLUMN_NAME = "_ts"
 
-    def __init__(self,
+    def __init__(
+        self,
         auth_client: GoogleAuthClient,
         spreadsheet_id: str,
         sheet_name: str,
@@ -378,7 +364,9 @@ class GoogleSheetRowStore:
         return InsertStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._columns, rows)
 
     def update(self, value: Dict[str, Any]) -> UpdateStmt:
-        return UpdateStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._scratchpad_cell, self._columns, value)
+        return UpdateStmt(
+            self._wrapper, self._spreadsheet_id, self._sheet_name, self._scratchpad_cell, self._columns, value
+        )
 
     def delete(self) -> DeleteStmt:
         return DeleteStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._scratchpad_cell, self._columns)
@@ -394,25 +382,15 @@ class GoogleSheetRowStore:
             raise InvalidOperationError
 
 
-
 def get_a1_column_mapping(columns):
     result = {}
     for idx, col in enumerate(columns):
-        result[col] = to_a1_column(idx+1)
+        result[col] = A1CellSelector.from_rc(column=idx+1).notation
 
     return result
 
-def to_a1_column(col_idx: int) -> str:
-    result = []
-    while col_idx:
-        cur = (col_idx-1) % 26
-        result.append(string.ascii_uppercase[cur])
-        col_idx = (col_idx-cur)//26
-
-    return "".join(result[::-1])
-
-def get_c1_column_mapping(columns):
+def get_col_idx_column_mapping(columns):
     result = {}
     for idx, col in enumerate(columns):
-        result[col] = "Col" + str(idx+1)
+        result[col] = "Col" + str(idx + 1)
     return result

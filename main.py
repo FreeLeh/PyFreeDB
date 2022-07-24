@@ -33,7 +33,14 @@ store = GoogleSheetRowStore(auth_client, spreadsheet_id, "data", ["name", "descr
 
 # print(store.select().where("name = ?", "fata").execute())
 
-store.insert([{"name": "fata2", "description": "hala madrid", }]).execute()
+store.insert(
+    [
+        {
+            "name": "fata2",
+            "description": "hala madrid",
+        }
+    ]
+).execute()
 print(store.select().where("name = ?", "fata2").execute())
 
 store.update({"price": 1234, "description": "yay"}).where("name = ?", "fata2").execute()

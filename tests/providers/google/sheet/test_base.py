@@ -1,34 +1,34 @@
-from pyfreeleh.providers.google.sheet.base import A1Range, CellSelector
+from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range
 
 
 def test_cell_selector():
-    assert CellSelector.from_notation("A") == CellSelector(column="A")
-    assert CellSelector.from_notation("1") == CellSelector(row="1")
-    assert CellSelector.from_notation("A1") == CellSelector(column="A", row="1")
-    assert CellSelector.from_notation("AAA123") == CellSelector(column="AAA", row="123")
+    assert A1CellSelector.from_notation("A") == A1CellSelector(column="A")
+    assert A1CellSelector.from_notation("1") == A1CellSelector(row="1")
+    assert A1CellSelector.from_notation("A1") == A1CellSelector(column="A", row="1")
+    assert A1CellSelector.from_notation("AAA123") == A1CellSelector(column="AAA", row="123")
 
 
 def test_a1_range_notation():
     testcases = [
         {
             "notation": "Sheet1!A1:B2",
-            "expected": A1Range("Sheet1", CellSelector("A", "1"), CellSelector("B", "2")),
+            "expected": A1Range("Sheet1", A1CellSelector("A", "1"), A1CellSelector("B", "2")),
         },
         {
             "notation": "Sheet1!A:A",
-            "expected": A1Range("Sheet1", CellSelector(column="A"), CellSelector(column="A")),
+            "expected": A1Range("Sheet1", A1CellSelector(column="A"), A1CellSelector(column="A")),
         },
         {
             "notation": "Sheet1!1:2",
-            "expected": A1Range("Sheet1", CellSelector(row="1"), CellSelector(row="2")),
+            "expected": A1Range("Sheet1", A1CellSelector(row="1"), A1CellSelector(row="2")),
         },
         {
             "notation": "Sheet1!A5:A",
-            "expected": A1Range("Sheet1", CellSelector(column="A", row="5"), CellSelector(column="A")),
+            "expected": A1Range("Sheet1", A1CellSelector(column="A", row="5"), A1CellSelector(column="A")),
         },
         {
             "notation": "A1:B2",
-            "expected": A1Range("", CellSelector("A", "1"), CellSelector("B", "2")),
+            "expected": A1Range("", A1CellSelector("A", "1"), A1CellSelector("B", "2")),
         },
         {
             "notation": "Sheet1",
@@ -36,7 +36,7 @@ def test_a1_range_notation():
         },
         {
             "notation": "'My Custom Sheet'!A:A",
-            "expected": A1Range("'My Custom Sheet'", CellSelector(column="A"), CellSelector(column="A")),
+            "expected": A1Range("'My Custom Sheet'", A1CellSelector(column="A"), A1CellSelector(column="A")),
         },
         {
             "notation": "'My Custom Sheet'",
