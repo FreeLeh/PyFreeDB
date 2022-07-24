@@ -1,7 +1,7 @@
 import abc
 
 
-class KV(abc.ABC):
+class KVStore(abc.ABC):
     @abc.abstractmethod
     def get(self, key: str) -> bytes:
         pass

@@ -7,10 +7,10 @@ from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 from pyfreeleh.providers.google.sheet.base import A1Range, CellSelector
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 
-from .base import KV, KeyNotFoundError
+from .base import KeyNotFoundError, KVStore
 
 
-class GoogleSheetKV(KV):
+class GoogleSheetKVStore(KVStore):
     DEFAULT_MODE = 0
     APPEND_ONLY_MODE = 1
     SCRATCHPAD_SUFFIX = "_scratch"

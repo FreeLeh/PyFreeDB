@@ -86,3 +86,9 @@ class UpdateRowsResult:
     updated_columns: int
     updated_cells: int
     updated_values: List[List[Any]]
+
+
+@dataclass
+class BatchUpdateRowsRequest:
+    range: A1Range
+    values: List[List[Any]]
