@@ -40,12 +40,14 @@ class GoogleSheetWrapper:
     def overwrite_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
         return self._insert_rows(spreadsheet_id, range, values, self.APPEND_MODE_OVERWRITE)
 
-    def _insert_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]], mode: str) -> InsertRowsResult:
+    def _insert_rows(
+        self, spreadsheet_id: str, a1_range: A1Range, values: List[List[Any]], mode: str
+    ) -> InsertRowsResult:
         resp = (
             self._svc.values()
             .append(
                 spreadsheetId=spreadsheet_id,
-                range=range.notation,
+                range=str(a1_range),
                 insertDataOption=mode,
                 includeValuesInResponse="true",
                 responseValueRenderOption="FORMATTED_VALUE",
@@ -64,19 +66,17 @@ class GoogleSheetWrapper:
         )
 
     def clear(self, spreadsheet_id: str, ranges: List[A1Range]) -> None:
-        self._svc.values().batchClear(
-            spreadsheetId=spreadsheet_id, body={"ranges": [r.notation for r in ranges]}
-        ).execute()
+        self._svc.values().batchClear(spreadsheetId=spreadsheet_id, body={"ranges": [str(r) for r in ranges]}).execute()
 
-    def update_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> UpdateRowsResult:
+    def update_rows(self, spreadsheet_id: str, a1_range: A1Range, values: List[List[Any]]) -> UpdateRowsResult:
         resp = (
             self._svc.values().update(
                 spreadsheetId=spreadsheet_id,
-                range=range.notation,
+                range=str(a1_range),
                 includeValuesInResponse="true",
                 responseValueRenderOption="FORMATTED_VALUE",
                 valueInputOption="USER_ENTERED",
-                body={"majorDimension": self.MAJOR_DIMENSION_ROWS, "range": range.notation, "values": values},
+                body={"majorDimension": self.MAJOR_DIMENSION_ROWS, "range": str(a1_range), "values": values},
             )
         ).execute()
 
@@ -100,7 +100,7 @@ class GoogleSheetWrapper:
                     "data": [
                         {
                             "majorDimension": self.MAJOR_DIMENSION_ROWS,
-                            "range": req.range.notation,
+                            "range": str(req.range),
                             "values": req.values,
                         }
                         for req in requests

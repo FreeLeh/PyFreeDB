@@ -7,9 +7,11 @@ from .base import GoogleAuthClient
 
 
 class ServiceAccountGoogleAuthClient(GoogleAuthClient):
-    def __init__(self, creds: service_account.Credentials) -> None:
+    def __init__(self, creds: service_account.Credentials, populate_token: bool = True) -> None:
         # Token will not be populated if we don't call refresh.
-        creds.refresh(Request())
+        if populate_token:
+            creds.refresh(Request())
+
         self._creds = creds
 
     @classmethod

@@ -30,18 +30,17 @@ class A1CellSelector:
 
     @classmethod
     def from_notation(cls, notation: str) -> "A1CellSelector":
-        column, row = notation, ""
+        column, row = notation, 0
 
         for i, c in enumerate(notation):
             if c.isdigit():
                 column = notation[:i]
-                row = notation[i:]
+                row = int(notation[i:])
                 break
 
         return cls(row=row, column=column)
 
-    @property
-    def notation(self) -> str:
+    def __str__(self) -> str:
         row = ""
         if self.row:
             row = str(self.row)
@@ -76,19 +75,18 @@ class A1Range:
                 start = A1CellSelector.from_notation(start_raw)
                 end = A1CellSelector.from_notation(end_raw)
             else:
-                start = A1CellSelector(notation)
-                end = A1CellSelector(notation)
+                start = A1CellSelector.from_notation(notation)
+                end = A1CellSelector.from_notation(notation)
 
         return cls(sheet_name=sheet_name, start=start, end=end)
 
-    @property
-    def notation(self) -> str:
+    def __str__(self) -> str:
         notation = []
         if self.sheet_name:
             notation.append(self.sheet_name)
 
         if self.start and self.end:
-            notation.append(self.start.notation + ":" + self.end.notation)
+            notation.append(str(self.start) + ":" + str(self.end))
 
         return "!".join(notation)
 

@@ -253,7 +253,7 @@ class UpdateStmt:
     def execute(self) -> int:
         data_range = A1Range(self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(len(self._columns)))
         query = self._query.build_select([self.ROW_IDX_FIELD]).replace('"', '""')
-        formula = self.INDICES_FORMULA_TEMPLATE.format(data_range=data_range.notation, query=query)
+        formula = self.INDICES_FORMULA_TEMPLATE.format(data_range=str(data_range), query=query)
 
         result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
         update_candidate_indices = [int(idx) for idx in result.updated_values[0][0].split(",") if idx]
@@ -298,9 +298,9 @@ class DeleteStmt:
         return self
 
     def execute(self) -> int:
-        location = A1Range(
-            self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(column=len(self._columns))
-        ).notation
+        location = str(
+            A1Range(self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(column=len(self._columns)))
+        )
         query = self._query.build_select([self.ROW_IDX_FIELD]).replace('"', '""')
         formula = self.INDICES_FORMULA_TEMPLATE.format(location, location, query)
 
@@ -404,7 +404,7 @@ class GoogleSheetRowStore:
 def get_a1_column_mapping(columns):
     result = {}
     for idx, col in enumerate(columns):
-        result[col] = A1CellSelector.from_rc(column=idx + 1).notation
+        result[col] = str(A1CellSelector.from_rc(column=idx + 1))
 
     return result
 
