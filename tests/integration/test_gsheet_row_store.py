@@ -1,9 +1,12 @@
+import pytest
+
 from pyfreeleh.row.gsheet import GoogleSheetRowStore, Ordering
 
 from .conftest import IntegrationTestConfig
 
 
-def gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSheetRowStore:
+@pytest.mark.integration
+def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSheetRowStore:
     row_store = GoogleSheetRowStore(
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
