@@ -1,4 +1,3 @@
-from pyparsing import col
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range
 
 

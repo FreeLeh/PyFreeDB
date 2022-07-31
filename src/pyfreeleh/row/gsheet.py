@@ -23,19 +23,19 @@ class QueryBuilder:
     TS_FIELD = "_ts"
 
     def __init__(self, col_mapping: Dict[str, str]):
-        self._where: Optional[Tuple[str, List[any]]] = None
+        self._where: Optional[Tuple[str, Tuple[Any, ...]]] = None
         self._orderings: List[Tuple[str, Ordering]] = []
         self._limit: int = 0
         self._offset: int = 0
 
         self._col_mapping = col_mapping
 
-    def where(self, condition, *args) -> "QueryBuilder":
+    def where(self, condition: str, *args: Any) -> "QueryBuilder":
         self._validate_where(condition, args)
         self._where = (condition, args)
         return self
 
-    def _validate_where(self, cond: str, args: any) -> None:
+    def _validate_where(self, cond: str, args: Any) -> None:
         if cond.count("?") != len(args):
             raise InvalidQuery("number of placeholder and argument is not equal")
 
@@ -58,7 +58,7 @@ class QueryBuilder:
         parts[1::2] = map(self._convert_arg, list(args))
         return "where " + "".join(map(str, parts))
 
-    def _convert_arg(self, arg):
+    def _convert_arg(self, arg: Any) -> Any:
         if isinstance(arg, str):
             return '"{}"'.format(arg)
 
@@ -73,7 +73,7 @@ class QueryBuilder:
             self._orderings.append((k, order))
         return self
 
-    def _validate_order_by(self, order_map: Dict[str, Ordering]):
+    def _validate_order_by(self, order_map: Dict[str, Ordering]) -> None:
         for key in order_map:
             if key not in self._col_mapping:
                 raise InvalidQuery("unrecognised field {}".format(key))
@@ -93,7 +93,7 @@ class QueryBuilder:
         self._limit = limit
         return self
 
-    def _validate_limit(self, limit: int):
+    def _validate_limit(self, limit: int) -> None:
         if limit < 0:
             raise InvalidQuery("limit can't be less than 0")
 
@@ -108,7 +108,7 @@ class QueryBuilder:
         self._offset = offset
         return self
 
-    def _validate_offset(self, offset: int):
+    def _validate_offset(self, offset: int) -> None:
         if offset < 0:
             raise InvalidQuery("offset can't be less than 0")
 
@@ -118,7 +118,7 @@ class QueryBuilder:
 
         return "offset {}".format(self._offset)
 
-    def build_select(self, columns) -> str:
+    def build_select(self, columns: List[str]) -> str:
         cols = []
         for col in columns:
             cols.append(self._col_mapping[col])
@@ -153,7 +153,7 @@ class SelectStmt:
         self._field_by_col = {col: field for field, col in self._col_mapping.items()}
         self._selected_columns = selected_columns
 
-    def where(self, condition, *args) -> "SelectStmt":
+    def where(self, condition: str, *args: Any) -> "SelectStmt":
         self._query.where(condition, *args)
         return self
 
@@ -206,17 +206,17 @@ class InsertStmt:
         self._col_mapping = a1_col_mapping
         self._field_by_col = {col: field for field, col in self._col_mapping.items()}
 
-    def execute(self):
+    def execute(self) -> None:
         raw_values = self._get_raw_values()
         self._wrapper.overwrite_rows(self._spreadsheet_id, A1Range.from_notation(self._sheet_name), raw_values)
 
-    def _get_raw_values(self):
+    def _get_raw_values(self) -> List[List[str]]:
         raw_values = []
         for row in self._rows:
             raw_values.append(self._to_values_row(row))
         return raw_values
 
-    def _to_values_row(self, row):
+    def _to_values_row(self, row: Dict[str, str]) -> List[str]:
         result = []
         for col in self._columns:
             result.append(row.get(col, ""))
@@ -246,7 +246,7 @@ class UpdateStmt:
         c1_col_mapping = get_col_idx_column_mapping(self._columns + [self.ROW_IDX_FIELD])
         self._query = QueryBuilder(c1_col_mapping)
 
-    def where(self, condition, *args) -> "UpdateStmt":
+    def where(self, condition: str, *args: Any) -> "UpdateStmt":
         self._query.where(condition, *args)
         return self
 
@@ -293,7 +293,7 @@ class DeleteStmt:
         c1_col_mapping = get_col_idx_column_mapping(self._columns + [self.ROW_IDX_FIELD])
         self._query = QueryBuilder(c1_col_mapping)
 
-    def where(self, condition, *args) -> "DeleteStmt":
+    def where(self, condition: str, *args: Any) -> "DeleteStmt":
         self._query.where(condition, *args)
         return self
 
@@ -367,10 +367,11 @@ class GoogleSheetRowStore:
         self._wrapper.update_rows(self._spreadsheet_id, A1Range(self._sheet_name), [self._columns])
 
     def select(self, *columns: str) -> SelectStmt:
-        if len(columns) == 0:
-            columns = self._columns[:-1]  # Exclude the _ts field.
+        selected_columns = list(columns)
+        if len(selected_columns) == 0:
+            selected_columns = self._columns[:-1]  # Exclude the _ts field.
 
-        return SelectStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, columns, self._columns)
+        return SelectStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, selected_columns, self._columns)
 
     def insert(self, rows: List[Dict[str, Any]]) -> InsertStmt:
         # _ts field is required to help us select non-empty rows.
@@ -401,7 +402,7 @@ class GoogleSheetRowStore:
             raise InvalidOperationError
 
 
-def get_a1_column_mapping(columns):
+def get_a1_column_mapping(columns: List[str]) -> Dict[str, str]:
     result = {}
     for idx, col in enumerate(columns):
         result[col] = str(A1CellSelector.from_rc(column=idx + 1))
@@ -409,7 +410,7 @@ def get_a1_column_mapping(columns):
     return result
 
 
-def get_col_idx_column_mapping(columns):
+def get_col_idx_column_mapping(columns: List[str]) -> Dict[str, str]:
     result = {}
     for idx, col in enumerate(columns):
         result[col] = "Col" + str(idx + 1)

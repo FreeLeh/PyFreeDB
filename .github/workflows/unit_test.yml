@@ -18,3 +18,4 @@ jobs:
           cache: 'pip'
       - run: ./scripts/dev.sh
       - run: ./scripts/test.sh
+      - run: ./scripts/lint.sh

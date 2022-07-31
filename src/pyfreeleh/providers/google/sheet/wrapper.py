@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import requests
 from googleapiclient.discovery import build
@@ -27,7 +27,7 @@ class GoogleSheetWrapper:
         resp = self._svc.batchUpdate(
             spreadsheetId=spreadsheet_id, body={"requests": {"addSheet": {"properties": {"title": sheet_name}}}}
         ).execute()
-        return resp["replies"][0]["addSheet"]["properties"]["sheetId"]
+        return str(resp["replies"][0]["addSheet"]["properties"]["sheetId"])
 
     def delete_sheet(self, spreadsheet_id: str, sheet_id: str) -> None:
         self._svc.batchUpdate(
@@ -124,27 +124,27 @@ class GoogleSheetWrapper:
 
         return results
 
-    def query(self, spreadsheet_id: str, sheet_name: str, query: str, skip_header=True):
-        params = {
+    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[Dict[str, str]]:
+        auth_token = "Bearer " + self._auth_client.credentials().token
+        headers = {"contentType": "application/json", "Authorization": auth_token}
+
+        params: Dict[str, Union[str, int]] = {
             "sheet": sheet_name,
             "tqx": "responseHandler:freeleh",
             "tq": query,
-            "headers": 1 if skip_header else 0,
+            "headers": 1 if has_header else 0,
         }
-        headers = {
-            "Authorization": "Bearer " + self._auth_client.credentials().token,
-            "contentType": "application/json",
-        }
-        r = requests.get(
-            "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id), params=params, headers=headers
-        )
-        return self._convert_query_result(r)
+
+        url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
+        r = requests.get(url=url, params=params, headers=headers)
+        r.raise_for_status()
+        return self._convert_query_result(r.text)
 
     def _convert_query_result(self, response: str) -> List[Dict[str, Any]]:
         # Remove the schema header -> freeleh({...}).
         # We only care about the JSON inside of the bracket.
-        start, end = response.text.index("{"), response.text.rindex("}")
-        resp = json.loads(response.text[start : end + 1])
+        start, end = response.index("{"), response.rindex("}")
+        resp = json.loads(response[start : end + 1])
         cols = resp["table"]["cols"]
         rows = resp["table"]["rows"]
 

@@ -21,7 +21,7 @@ class A1CellSelector:
     row: int = 0
 
     @classmethod
-    def from_rc(cls, column: str = "", row: int = 0) -> "A1CellSelector":
+    def from_rc(cls, column: int = 0, row: int = 0) -> "A1CellSelector":
         column_str = ""
         if column:
             column_str = to_a1_column(column)
