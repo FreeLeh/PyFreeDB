@@ -160,6 +160,3 @@ cython_debug/
 #.idea/
 
 .vscode/
-
-credentials.json
-token.json
