@@ -227,53 +227,49 @@ Some additional notes to understand the append only mode better:
 
 ## Google Sheets Row Store
 
-```go
-// If using Google Service Account.
-auth, _ := auth.NewServiceFromFile(
-    "<path_to_service_account_json>",
-    []string{auth.GoogleSheetsReadWrite},
-    auth.ServiceConfig{},
-)
+```py
+from pyfreeleh.providers.google import auth 
 
-// If using Google OAuth2 Flow.
-auth, err := auth.NewOAuth2FromFile(
-    "<path_to_client_secret_json>",
+scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+
+# If using Google Service Account.
+auth_client = auth.ServiceAccountGoogleAuthClient.from_service_account_file("<path_to_service_account_json>", scopes=scopes)
+
+# If using Google OAuth2 Flow.
+auth_client = auth.OAuth2GoogleAuthClient.from_authorized_user_file(
     "<path_to_cached_credentials_json>",
-    []string{auth.GoogleSheetsReadWrite},
-    auth.OAuth2Config{},
+    client_secret_filename="<path_to_client_secret_json>",
+    scopes=scopes,
 )
 
-// Below are the same regardless of the auth client chosen above.
-store := freeleh.NewGoogleSheetsRowStore(
-    auth,
-    "<spreadsheet_id>",
-    "<sheet_name>",
-    freeleh.GoogleSheetRowStoreConfig{Columns: []string{"name", "age"}},
+
+# Below are the same regardless of the auth client chosen above.
+from pyfreeleh.row import GoogleSheetRowStore
+store = GoogleSheetRowStore(
+    auth_client,
+    spreadsheet_id="<spreadsheet_id>",
+    sheet_name="<sheet_name>",
+    columns=["name", "age"],
 )
-defer store.Close(context.Background())
 
-type Person struct {
-	Name string
-	Age int
-}
+# Inserts a bunch of rows.
+_ = store.insert([
+    {"name": "name1", "age": 10},
+    {"name": "name2", "age": 11},
+    {"name": "name3", "age": 12}
+]).execute()
 
-// Inserts a bunch of rows.
-// Note that the here matters, and it should follow the GoogleSheetRowStoreConfig.Columns settings.
-_ = store.RawInsert(
-    []interface{}{"name1", 10},
-    []interface{}{"name2", 11},
-    []interface{}{"name3", 12},
-).Exec(context.Background())
+# Updates the name column for rows with age = 10
+store.update({"name": "name4"}).where("age = ?", 10).execute()
 
-// Updates the name column for rows with age = 10
-_ = store.Update(map[string]interface{}{"name": "name4"}).Where("age = ?", 10).Exec(context.Background())
+# Delete name=name2
+store.delete().where("age = ?", 11).execute()
 
-// Deletes rows with age = 11
-_ = store.Delete().Where("age = ?", 11).Exec(context.Background())
+# Filter results
+print(store.select("name").where("name = ? OR age = ?", "name4", 12).execute()) # [{"name": "name4"}, {"name": "name3"}]
 
-// Returns rows with just the name values for rows with name = name4 or age = 12
-var results []Person
-_ = store.Select(&results, "name").Where("name = ? OR age = ?", "name4", 12).Exec(context.Background())
+# It's recommended to call kv.close() after you done to clean up things.
+kv.close()
 ```
 
 Getting started is very simple (error handling ignored for brevity).
@@ -293,53 +289,52 @@ For all the examples in this section, we assume we have a table of 2 columns: na
 > Concurrency is not a primary consideration and there is no such thing as a "transaction" concept anywhere.
 > Each statement may trigger multiple APIs and those API executions are not atomic in nature.
 
-### `Select(output interface{}, columns ...string) *googleSheetSelectStmt`
+### `select(*columns: str) -> pyfreeleh.row.gsheet.SelectStmt`
 
-- `Select` returns a statement to perform the actual select operation. You can think of this operation like the normal SQL select statement (with limitations).
+- `select` returns a statement to perform the actual select operation. You can think of this operation like the normal SQL select statement (with limitations).
 - If `columns` is an empty list, all columns will be returned.
-- If a column is not found in the provided list of columns in `GoogleSheetRowStoreConfig.Columns`, that column will be ignored.
-- The `output` argument must be a pointer to a slice.
-- We are using the [`mapstructure`](https://pkg.go.dev/github.com/mitchellh/mapstructure) package to perform the conversion from a raw `map[string]interface{}` into the `output` argument. Any struct tag provided by `mapstructure` should work as well.
+- If a column is not found in the provided list of columns that you pass to the initializer, that column will be ignored.
 
-#### `googleSheetSelectStmt`
+#### `pyfreeleh.row.gsheet.SelectStmt`
 
-##### `Where(condition string, args ...interface{}) *googleSheetSelectStmt`
+##### `where(condition: str, *args: Any) -> pyfreeleh.row.gsheet.SelectStmt`
 
-- The values in `condition` string must be replaced using a placeholder.
+- The values in `condition` string must be replaced using a placeholder denoted by `?`.
 - The actual values used for each placeholder (ordering matters) are provided via the `args` parameter.
-- The purpose of doing this is because we need to replace each column name registered in `GoogleSheetRowStoreConfig.Columns` into the column name in Google Sheet (i.e. `A` for the first column, `B` for the second column, and so on).
+- The purpose of doing this is because we need to replace each column name into the column name in Google Sheet (i.e. `A` for the first column, `B` for the second column, and so on).
 - All conditions supported by Google Sheet `QUERY` function are supported by this library. You can read the full information in this [Google Sheets Query docs](https://developers.google.com/chart/interactive/docs/querylanguage#where).
 - This function returns a reference to the statement for chaining.
 
 Examples:
 
-```go
-// SELECT * WHERE A = "bob" AND B = 12
-store.Select(&result).Where("name = ? AND age = ?", "bob", 12)
+```py
+# SELECT * WHERE A = "bob" AND B = 12
+store.select().where("name = ? AND age = ?", "bob", 12)
 
-// SELECT * WHERE A like "b%" OR B >= 10
-store.Select(&result).Where("name like ? OR age >= ?", "b%", 10) 
+# SELECT * WHERE A like "b%" OR B >= 10
+store.select().where("name like ? OR age >= ?", "b%", 10) 
 ```
 
-##### `OrderBy(colToOrdering map[string]OrderBy) *googleSheetSelectStmt`
+##### `order_by(**ordering: pyfreeleh.row.Ordering) -> pyfreeleh.row.gsheet.SelectStmt`
 
-- The `colToOrdering` argument decides which column should have what kind of ordering.
-- The library provides 2 `OrderBy` constants: `OrderByAsc` and `OrderByDesc`.
-- And empty `colToOrdering` map will result in no operation.
+- The `ordering` kwargs decides which column should have what kind of ordering.
+- The library provides 2 ordering constants: `pyfreeleh.row.Ordering.ASC` and `pyfreeleh.row.Ordering.DESC`.
+- And empty `ordering` kwargs will result in no operation.
 - This function will translate into the `ORDER BY` clause as stated in this [Google Sheets Query docs](https://developers.google.com/chart/interactive/docs/querylanguage#order-by).
 - This function returns a reference to the statement for chaining.
+- Keyword ordering matters.
 
 Examples:
 
-```go
-// SELECT * WHERE A = "bob" AND B = 12 ORDER BY A ASC, B DESC
-store.Select(&result).Where("name = ? AND age = ?", "bob", 12).OrderBy(map[string]OrderBy{"name": OrderByAsc, "age": OrderByDesc)
+```py
+# SELECT * WHERE A = "bob" AND B = 12 ORDER BY A ASC, B DESC
+store.select().where("name = ? AND age = ?", "bob", 12).order_by(name=Ordering.ASC, age=Ordering.DESC)
 
-// SELECT * ORDER BY A ASC
-store.Select(&result).OrderBy(map[string]OrderBy{"name": OrderByAsc})
+# SELECT * ORDER BY A ASC
+store.select().order_by(name=Ordering.ASC)
 ```
 
-##### `Limit(limit uint64) *googleSheetSelectStmt`
+##### `limit(limit: int) -> pyfreeleh.row.gsheet.SelectStmt`
 
 - This function limits the number of returned rows.
 - This function will translate into the `LIMIT` clause as stated in this [Google Sheets Query docs](https://developers.google.com/chart/interactive/docs/querylanguage#limit).
@@ -347,12 +342,12 @@ store.Select(&result).OrderBy(map[string]OrderBy{"name": OrderByAsc})
 
 Examples:
 
-```go
-// SELECT * WHERE A = "bob" AND B = 12 LIMIT 10
-store.Select(&result).Where("name = ? AND age = ?", "bob", 12).Limit(10)
+```py
+# SELECT * WHERE A = "bob" AND B = 12 LIMIT 10
+store.select().where("name = ? AND age = ?", "bob", 12).limit(10)
 ```
 
-##### `Offset(offset uint64) *googleSheetSelectStmt`
+##### `offset(offset: int) -> pyfreeleh.row.gsheet.SelectStmt`
 
 - This function skips a given number of first rows.
 - This function will translate into the `OFFSET` clause as stated in this [Google Sheets Query docs](https://developers.google.com/chart/interactive/docs/querylanguage#offset).
@@ -360,73 +355,67 @@ store.Select(&result).Where("name = ? AND age = ?", "bob", 12).Limit(10)
 
 Examples:
 
-```go
-// SELECT * WHERE A = "bob" AND B = 12 OFFSET 10
-store.Select(&result).Where("name = ? AND age = ?", "bob", 12).Offset(10)
+```py
+# SELECT * WHERE A = "bob" AND B = 12 OFFSET 10
+store.select().where("name = ? AND age = ?", "bob", 12).offset(10)
 ```
 
-##### `Exec(ctx context.Context) error`
+##### `execute() -> List[Dict[str, str]]`
 
-- This function will actually execute the `SELECT` statement and inject the resulting rows into the provided `output` argument in the `Select` function.
+- This function will actually execute the `SELECT` statement and return the result.
 - There is only one API call involved in this function.
 
 Examples:
 
-```go
-ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-err := store.Select(&result).Where("name = ? AND age = ?", "bob", 12).Exec(ctx)
+```py
+print(store.select().where("name = ? AND age = ?", "bob", 12).excute)
 ```
  
-### `RawInsert(rows ...[]interface{}) *googleSheetRawInsertStmt`
+### `insert(rows: List[Dict[str, str]]) -> pyfreeleh.row.gsheet.InsertStmt`
 
-- `RawInsert` returns a statement to perform the actual insert operation.
-- The `rows` argument is a slice of an `interface{}` slice.
-- The ordering of the values inside each slice of `interface{}` matters as it is the ordering that this library will use when inserting into the Google Sheet.
+- `insert` returns a statement to perform the actual insert operation.
 
-> This function is called `RawInsert` because the library is not really concerned with how the values in each row is formed.
-> There is also no type checking involved.
-> In the future, we are thinking of adding an `Insert` function that will provide a simple type checking mechanism.
+#### `pyfreeleh.row.gsheet.InsertStmt`
 
-#### `googleSheetRawInsertStmt`
-
-##### `Exec(ctx context.Context) error`
+##### `execute() -> None`
 
 - This function will actually execute the `INSERT` statement.
 - This works by appending new rows into Google Sheets.
 - There is only one API call involved in this function.
 
-### `Update(colToValue map[string]interface{}) *googleSheetUpdateStmt`
+### `update(updated_value: Dict[str, str]) -> pyfreeleh.row.gsheet.UpdateStmt`
  
 - `Update` returns a statement to perform the actual update operation.
-- The `colToValue` map tells the library which column should be updated to what value.
-- Note that the column in `colToValue` must exist in the `GoogleSheetRowStoreConfig.Columns` definition.
-- The value is not type checked at the moment.
+- The `updated_value` dict tells the library which column should be updated to what value.
+- Note that the column in `updated_value` must exist in columns that you've passed during initialisation.
 
-#### `googleSheetUpdateStmt`
+#### `pyfreeleh.row.gsheet.UpdateStmt`
 
-##### `Where(condition string, args ...interface{}) *googleSheetUpdateStmt`
+##### `where(condition: str, *args: Any) -> pyfreeleh.row.gsheet.UpdateStmt`
 
-This works exactly the same as the `googleSheetSelectStmt.Where` function. You can refer to the above section for more details.
+This works exactly the same as the `pyfreeleh.row.gsheet.SelectStmt.where` function. You can refer to the above section for more details.
 
-##### `Exec(ctx context.Context) error`
+##### `execute() -> int`
 
 - This function will actually execute the `UPDATE` statement.
 - There are two API calls involved: one for figuring out which rows are affected and another for actually updating the values.
+- Returns number of affected rows by the update.
   
-### `Delete() *googleSheetDeleteStmt`
+### `delete() -> pyfreeleh.row.gsheet.DeleteStmt`
 
-- `Delete` returns a statement to perform the actual delete operation.
+- `delete` returns a statement to perform the actual delete operation.
 
-#### `googleSheetDeleteStmt`
+#### `pyfreeleh.row.gsheet.DeleteStmt`
 
-##### `Where(condition string, args ...interface{}) *googleSheetDeleteStmt`
+##### `where(condition: str, *args: Any) -> pyfreeleh.row.gsheet.DeleteStmt`
 
-This works exactly the same as the `googleSheetSelectStmt.Where` function. You can refer to the above section for more details.
+This works exactly the same as the `pyfreeleh.row.gsheet.SelectStmt.where` function. You can refer to the above section for more details.
 
-##### `Exec(ctx context.Context) error`
+##### `execute() -> int`
 
 - This function will actually execute the `DELETE` statement.
 - There are two API calls involved: one for figuring out which rows are affected and another for actually deleting the rows.
+- Returns number of affected rows by the delete.
 
 # Google Credentials
 
@@ -437,12 +426,11 @@ There are 2 modes of authentication that we support:
 
 ## OAuth2 Flow
 
-```go
-auth, err := auth.NewOAuth2FromFile(
-    "<path_to_client_secret_json>",
+```py
+auth_client = auth.OAuth2GoogleAuthClient.from_authorized_user_file(
     "<path_to_cached_credentials_json>",
-    scopes,
-    auth.OAuth2Config{},
+    client_secret_filename="<path_to_client_secret_json>",
+    scopes=scopes,
 )
 ```
 
@@ -462,12 +450,8 @@ If you want to understand the details, you can start from this [Google OAuth2 pa
 
 ## Service Account Flow
 
-```go
-auth, err := auth.NewServiceFromFile(
-    "<path_to_service_account_json>",
-    scopes,
-    auth.ServiceConfig{},
-)
+```py
+auth_client = auth.ServiceAccountGoogleAuthClient.from_service_account_file("<path_to_service_account_json>", scopes=scopes)
 ```
 
 **Explanations:**
@@ -481,37 +465,12 @@ If you want to understand the details, you can start from this [Google Service A
 > Note that a service account is just like an account. The email in the `service_account_json` must be allowed to read/write into the Google Sheet itself just like a normal email address.
 > If you don't do this, you will get an authorization error.
 
-## Custom HTTP Client
-
-We are using HTTP to connect to Google server to handle the authentication flow done by the [Golang OAuth2](golang.org/x/oauth2) library internally.
-By default, it will be using the default HTTP client provided by `net/http`: `http.DefaultClient`.
-
-For most simple use cases, `http.DefaultClient` should be sufficient.
-However, if you want to use a custom `http.Client` instance, you can do that too.
-
-```go
-customHTTPClient := &http.Client{Timeout: time.Second*10}
-
-auth, err := auth.NewOAuth2FromFile(
-    "<path_to_client_secret_json>",
-    "<path_to_cached_credentials_json>",
-    scopes,
-    auth.OAuth2Config{HTTPClient: customHTTPClient},
-)
-
-auth, err := auth.NewServiceFromFile(
-    "<path_to_service_account_json>",
-    scopes,
-    auth.ServiceConfig{HTTPClient: customHTTPClient},
-)
-```
-
 # Limitations
 
 1. If you want to manually edit the Google Sheet, you can do it, but you need to understand the value encoding scheme.
 2. It is not easy to support concurrent operations. Only few modes or abstractions allow concurrent operations.
 3. Performance is not a high priority for this project.
-4. `GoFreeLeh` does not support OAuth2 flow that spans across frontend and backend yet.
+4. `PyFreeLeh` does not support OAuth2 flow that spans across frontend and backend yet.
 
 ### (Google Sheets Key Value) Exclamation Mark `!` Prefix
 
