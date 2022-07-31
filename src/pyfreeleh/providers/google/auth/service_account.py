@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account

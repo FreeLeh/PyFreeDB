@@ -85,7 +85,7 @@ class GoogleSheetWrapper:
             updated_rows=resp["updatedRows"],
             updated_columns=resp["updatedColumns"],
             updated_cells=resp["updatedCells"],
-            updated_values=resp["updatedData"]["values"],
+            updated_values=resp["updatedData"].get("values"),
         )
 
     def batch_update_rows(self, spreadsheet_id: str, requests: List[BatchUpdateRowsRequest]) -> List[UpdateRowsResult]:

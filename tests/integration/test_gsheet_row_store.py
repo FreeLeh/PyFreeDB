@@ -1,18 +1,13 @@
-from re import L
-from .conftest import Config
-
-from pyfreeleh.providers.google.auth.service_account import ServiceAccountGoogleAuthClient
 from pyfreeleh.row.gsheet import GoogleSheetRowStore, Ordering
 
+from .conftest import IntegrationTestConfig
 
-def gsheet_row_store_integration(config: Config) -> GoogleSheetRowStore:
-    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    auth_client = ServiceAccountGoogleAuthClient.from_service_account_info(config.service_account_info, scopes=scopes)
 
+def gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSheetRowStore:
     row_store = GoogleSheetRowStore(
-        auth_client,
+        config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
-        sheet_name=config.sheet_name,
+        sheet_name="row_store",
         columns=["name", "age", "dob"],
     )
 
@@ -64,13 +59,3 @@ def gsheet_row_store_integration(config: Config) -> GoogleSheetRowStore:
 
     row_store.close()
     return row_store
-
-
-def test_gsheet_row_store_integration(config: Config):
-    try:
-        row_store = gsheet_row_store_integration(config)
-    finally:
-        # _sheet_id and _scratchpad_sheet_id is not guaranteed to exists. Should not used outside test env.
-        # Ideally we should not use this to do cleanup.
-        row_store._wrapper.delete_sheet(config.spreadsheet_id, row_store._sheet_id)
-        row_store._wrapper.delete_sheet(config.spreadsheet_id, row_store._scratchpad_sheet_id)
