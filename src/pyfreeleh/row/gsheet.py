@@ -135,7 +135,14 @@ class QueryBuilder:
 
 
 class SelectStmt:
-    def __init__(self, wrapper: GoogleSheetWrapper, spreadsheet_id: str, sheet_name: str, columns: List[str]):
+    def __init__(
+        self,
+        wrapper: GoogleSheetWrapper,
+        spreadsheet_id: str,
+        sheet_name: str,
+        selected_columns: List[str],
+        columns: List[str],
+    ):
         self._wrapper = wrapper
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
@@ -145,6 +152,7 @@ class SelectStmt:
         self._query = QueryBuilder(a1_col_mapping)
         self._col_mapping = a1_col_mapping
         self._field_by_col = {col: field for field, col in self._col_mapping.items()}
+        self._selected_columns = selected_columns
 
     def where(self, condition, *args) -> "SelectStmt":
         self._query.where(condition, *args)
@@ -163,9 +171,13 @@ class SelectStmt:
         return self
 
     def execute(self) -> List[Dict[str, Any]]:
-        results = []
+        rows = self._wrapper.query(
+            self._spreadsheet_id,
+            self._sheet_name,
+            self._query.build_select(self._selected_columns),
+        )
 
-        rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(self._columns))
+        results = []
         for row in rows:
             row_result = {}
             for k, v in row.items():
@@ -239,7 +251,7 @@ class UpdateStmt:
         self._query.where(condition, *args)
         return self
 
-    def execute(self):
+    def execute(self) -> int:
         data_range = A1Range(self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(len(self._columns)))
         query = self._query.build_select([self.ROW_IDX_FIELD]).replace('"', '""')
         formula = self.INDICES_FORMULA_TEMPLATE.format(data_range=data_range.notation, query=query)
@@ -258,6 +270,7 @@ class UpdateStmt:
                 requests.append(BatchUpdateRowsRequest(update_range, [[self._val[col]]]))
 
         self._wrapper.batch_update_rows(self._spreadsheet_id, requests)
+        return len(update_candidate_indices)
 
 
 class DeleteStmt:
@@ -285,7 +298,7 @@ class DeleteStmt:
         self._query.where(condition, *args)
         return self
 
-    def execute(self):
+    def execute(self) -> int:
         location = A1Range(
             self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(column=len(self._columns))
         ).notation
@@ -294,14 +307,15 @@ class DeleteStmt:
 
         result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
         update_candidate_indices = [int(idx) for idx in result.updated_values[0][0].split(",") if idx]
-        print(update_candidate_indices)
 
         requests = []
         for row_idx in update_candidate_indices:
-            row_selector=A1CellSelector.from_rc(row=row_idx)
-            requests.append( A1Range(self._sheet_name, start=row_selector, end=row_selector))
+            row_selector = A1CellSelector.from_rc(row=row_idx)
+            requests.append(A1Range(self._sheet_name, start=row_selector, end=row_selector))
 
         self._wrapper.clear(self._spreadsheet_id, requests)
+
+        return len(update_candidate_indices)
 
 
 class GoogleSheetRowStore:
@@ -341,27 +355,33 @@ class GoogleSheetRowStore:
 
     def _ensure_sheet(self) -> None:
         try:
-            self._wrapper.create_sheet(self._spreadsheet_id, self._sheet_name)
+            self._sheet_id = self._wrapper.create_sheet(self._spreadsheet_id, self._sheet_name)
         except Exception:
             pass
 
         try:
-            self._wrapper.create_sheet(self._spreadsheet_id, self._scratchpad_name)
+            self._scratchpad_sheet_id = self._wrapper.create_sheet(self._spreadsheet_id, self._scratchpad_name)
         except Exception:
             pass
 
     def _ensure_headers(self) -> None:
         self._wrapper.update_rows(self._spreadsheet_id, A1Range(self._sheet_name), [self._columns])
 
-    def select(self) -> SelectStmt:
-        return SelectStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._columns)
+    def select(self, *columns: str) -> SelectStmt:
+        if len(columns) == 0:
+            columns = self._columns[:-1]  # Exclude the _ts field.
+
+        return SelectStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, columns, self._columns)
 
     def insert(self, rows: List[Dict[str, Any]]) -> InsertStmt:
         # _ts field is required to help us select non-empty rows.
+        rows_with_ts = []
         for row in rows:
+            row = row.copy()
             row[self.TS_COLUMN_NAME] = time.time()
+            rows_with_ts.append(row)
 
-        return InsertStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._columns, rows)
+        return InsertStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._columns, rows_with_ts)
 
     def update(self, value: Dict[str, Any]) -> UpdateStmt:
         return UpdateStmt(
@@ -385,9 +405,10 @@ class GoogleSheetRowStore:
 def get_a1_column_mapping(columns):
     result = {}
     for idx, col in enumerate(columns):
-        result[col] = A1CellSelector.from_rc(column=idx+1).notation
+        result[col] = A1CellSelector.from_rc(column=idx + 1).notation
 
     return result
+
 
 def get_col_idx_column_mapping(columns):
     result = {}

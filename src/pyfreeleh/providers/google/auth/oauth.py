@@ -9,7 +9,6 @@ from .base import GoogleAuthClient
 
 
 class OAuth2GoogleAuthClient(GoogleAuthClient):
-    # TODO(fata.nugraha): test what happen if we change the scope
     def __init__(self, creds: Credentials) -> None:
         if creds.expired and creds.refresh_token:
             creds.refresh(Request())

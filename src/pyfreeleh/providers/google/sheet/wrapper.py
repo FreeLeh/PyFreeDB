@@ -23,9 +23,15 @@ class GoogleSheetWrapper:
         resp = self._svc.create(body={"properties": {"title": title}}).execute()
         return str(resp["spreadsheetId"])
 
-    def create_sheet(self, spreadsheet_id: str, sheet_name: str) -> None:
-        self._svc.batchUpdate(
+    def create_sheet(self, spreadsheet_id: str, sheet_name: str) -> str:
+        resp = self._svc.batchUpdate(
             spreadsheetId=spreadsheet_id, body={"requests": {"addSheet": {"properties": {"title": sheet_name}}}}
+        ).execute()
+        return resp["replies"][0]["addSheet"]["properties"]["sheetId"]
+
+    def delete_sheet(self, spreadsheet_id: str, sheet_id: str) -> None:
+        self._svc.batchUpdate(
+            spreadsheetId=spreadsheet_id, body={"requests": {"deleteSheet": {"sheetId": sheet_id}}}
         ).execute()
 
     def insert_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
@@ -118,9 +124,9 @@ class GoogleSheetWrapper:
 
         return results
 
-    def query(self, spreadsheet_id: str, sheet_name: str, query: str, skip_header=False):
+    def query(self, spreadsheet_id: str, sheet_name: str, query: str, skip_header=True):
         params = {
-            "sheet": "",
+            "sheet": sheet_name,
             "tqx": "responseHandler:freeleh",
             "tq": query,
             "headers": 1 if skip_header else 0,
@@ -129,11 +135,9 @@ class GoogleSheetWrapper:
             "Authorization": "Bearer " + self._auth_client.credentials().token,
             "contentType": "application/json",
         }
-        print(query)
         r = requests.get(
             "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id), params=params, headers=headers
         )
-        print(r.text)
         return self._convert_query_result(r)
 
     def _convert_query_result(self, response: str) -> List[Dict[str, Any]]:
