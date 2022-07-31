@@ -15,4 +15,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
+          cache: 'pip'
+      - run: ./scripts/dev.sh
       - run: ./scripts/test.sh
