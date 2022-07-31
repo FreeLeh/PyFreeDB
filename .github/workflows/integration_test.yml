@@ -1,0 +1,18 @@
+name: Integration Test
+on: workflow_dispatch
+
+jobs:
+  integration_test:
+    unit_test-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.10' ]
+    name: Python ${{ matrix.python-version }} 
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+      - run: ./scripts/integration_test.sh
