@@ -1,5 +1,4 @@
 import time
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 from pyfreeleh.base import Codec, InvalidOperationError
@@ -7,15 +6,11 @@ from pyfreeleh.codec import BasicCodec
 from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreeleh.row.base import Ordering
 
 
 class InvalidQuery(Exception):
     pass
-
-
-class Ordering(Enum):
-    ASC = "ASC"
-    DESC = "DESC"
 
 
 class QueryBuilder:

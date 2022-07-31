@@ -6,7 +6,7 @@ import time
 import pytest
 from googleapiclient.discovery import build
 
-from pyfreeleh.providers.google.auth.service_account import ServiceAccountGoogleAuthClient
+from pyfreeleh.providers.google.auth import ServiceAccountGoogleAuthClient
 
 
 @dataclasses.dataclass

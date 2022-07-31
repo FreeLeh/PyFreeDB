@@ -2,6 +2,9 @@ name: Integration Test
 on: 
   workflow_dispatch:
 
+env:
+  T_SERVICE_ACCOUNT_INFO: ${{ secrets.T_SERVICE_ACCOUNT_INFO }}
+
 jobs:
   integration_test:
     runs-on: ubuntu-latest

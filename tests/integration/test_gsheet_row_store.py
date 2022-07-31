@@ -1,6 +1,6 @@
 import pytest
 
-from pyfreeleh.row.gsheet import GoogleSheetRowStore, Ordering
+from pyfreeleh.row import GoogleSheetRowStore, Ordering
 
 from .conftest import IntegrationTestConfig
 
