@@ -11,7 +11,7 @@ install_requires = [
 
 setup(
     name="pyfreeleh",
-    version="0.0.1",
+    version="0.0.2",
     install_requires=install_requires,
     package_dir={"": "src"},
     packages=find_packages(where="src"),
