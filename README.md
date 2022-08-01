@@ -19,6 +19,8 @@ Our main goal is to make developers who want to **just start their small persona
 
 `PyFreeLeh` is just the beginning. It is very likely we will explore other languages (e.g. Java, Kotlin, Swift, etc.) to support in the future.
 
+> Check out [GoFreeLeh](https://github.com/FreeLeh/GoFreeLeh/) for the Go version!
+
 ## What kind of interfaces/abstractions can this library provide?
 
 Here are a few things we have developed so far:
@@ -32,7 +34,7 @@ There are other ideas we have in our backlog:
 2. A simple message queue on top of Telegram Channels.
 
 We are quite open to knowing any other free services we can leverage on.<br>
-Please suggest your ideas in the [issues]() page!
+Please suggest your ideas in the [issues](https://github.com/FreeLeh/PyFreeLeh/issues) page!
 
 ## What can I do with these interfaces/abstractions?
 
@@ -53,6 +55,7 @@ Here are a few ideas we thought of:
 
 # Table of Contents
 
+* [Installation](#installation)
 * [Key Value Store](#key-value-store)
     * [Google Sheets Key Value Store](#google-sheets-key-value-store)
         * [Key Value Store Interface](#key-value-store-interface)
@@ -70,6 +73,11 @@ Here are a few ideas we thought of:
 * [Disclaimer](#disclaimer)
 * [License](#license)
     
+# Installation
+
+```
+pip install pyfreeleh
+```
 
 # Key Value Store
 
