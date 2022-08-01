@@ -18,7 +18,7 @@ class IntegrationTestConfig:
 @pytest.fixture(scope="session")
 def auth_client() -> ServiceAccountGoogleAuthClient:
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-    account_info_json = os.getenv("T_SERVICE_ACCOUNT_INFO", "{}")
+    account_info_json = os.getenv("INTEGRATION_TEST_AUTH_JSON", "{}")
     return ServiceAccountGoogleAuthClient.from_service_account_info(json.loads(account_info_json), scopes=scopes)
 
 

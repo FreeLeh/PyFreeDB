@@ -1,17 +1,17 @@
 name: Integration Test
-on: 
-  workflow_dispatch:
+on: push
 
 env:
-  T_SERVICE_ACCOUNT_INFO: ${{ secrets.T_SERVICE_ACCOUNT_INFO }}
+  INTEGRATION_TEST_AUTH_JSON: ${{ secrets.INTEGRATION_TEST_AUTH_JSON }}
 
 jobs:
   integration_test:
     runs-on: ubuntu-latest
+    environment: integration_test
     strategy:
       matrix:
-        python-version: [ '3.10' ]
-    name: Python ${{ matrix.python-version }} 
+        python-version: ["3.10"]
+    name: Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup Python
@@ -19,6 +19,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-          cache: 'pip'
+          cache: "pip"
       - run: ./scripts/dev.sh
       - run: ./scripts/integration_test.sh
