@@ -11,3 +11,8 @@ class Codec(abc.ABC):
 
 class InvalidOperationError(Exception):
     pass
+
+
+# Please raise an issue when this happens.
+class InternalError(Exception):
+    pass

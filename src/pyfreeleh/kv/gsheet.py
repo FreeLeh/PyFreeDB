@@ -108,14 +108,14 @@ class GoogleSheetKVStore(KVStore):
         formula = '=MATCH("{key}", {sheet_name}!A:A, 0)'.format(key=key, sheet_name=self._sheet_name)
         resp = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
 
-        row_idx = str(self._ensure_values(resp.updated_values))
+        row_idx = self._ensure_values(resp.updated_values)
         return A1Range(self._sheet_name, A1CellSelector(row=row_idx), A1CellSelector(row=row_idx))
 
     def _append_only_set(self, key: str, data: str, ts: int) -> None:
         self._wrapper.insert_rows(self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]])
 
     def _ensure_values(self, values: List[List[Any]]) -> Any:
-        if not values or not values[0]:
+        if not values:
             raise KeyNotFoundError
 
         value = values[0][0]

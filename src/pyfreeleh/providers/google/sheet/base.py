@@ -106,7 +106,7 @@ class UpdateRowsResult:
     updated_rows: int
     updated_columns: int
     updated_cells: int
-    updated_values: Optional[List[List[Any]]]
+    updated_values: List[List[Any]]
 
 
 @dataclass
