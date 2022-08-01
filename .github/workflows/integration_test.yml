@@ -1,5 +1,7 @@
 name: Integration Test
-on: push
+on:
+  pull_request_review:
+    types: [submitted]
 
 env:
   INTEGRATION_TEST_AUTH_JSON: ${{ secrets.INTEGRATION_TEST_AUTH_JSON }}
@@ -22,3 +24,4 @@ jobs:
           cache: "pip"
       - run: ./scripts/dev.sh
       - run: ./scripts/integration_test.sh
+    if: github.event.review.state == 'approved'
