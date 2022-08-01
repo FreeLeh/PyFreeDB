@@ -1,13 +1,18 @@
+from gettext import install
+
 from setuptools import find_packages, setup
 
-requirements = []
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
+install_requires = [
+    "google-api-python-client==2.51.0",
+    "google-auth-httplib2==0.1.0",
+    "google-auth-oauthlib==0.5.2",
+    "requests==2.28.1",
+]
 
 setup(
     name="pyfreeleh",
-    version="0.1.0",
-    install_requires=requirements,
+    version="0.0.2",
+    install_requires=install_requires,
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.7",
