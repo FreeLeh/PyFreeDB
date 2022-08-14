@@ -1,5 +1,4 @@
-import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
 
 from pyfreeleh.base import Codec, InvalidOperationError
 from pyfreeleh.codec import BasicCodec
@@ -7,15 +6,18 @@ from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 from pyfreeleh.row.base import Ordering
+from pyfreeleh.row.models import Model
 
 
 class InvalidQuery(Exception):
     pass
 
 
+T = TypeVar("T", bound=Model)
+
+
 class QueryBuilder:
-    WHERE_TEMPLATE = "{} IS NOT NULL AND {}"
-    TS_FIELD = "_ts"
+    TS_FIELD = "_rid"
 
     def __init__(self, col_mapping: Dict[str, str]):
         self._where: Optional[Tuple[str, Tuple[Any, ...]]] = None
@@ -36,22 +38,27 @@ class QueryBuilder:
 
     # TODO(fata.nugraha): find better interface to do this (maybe follow django/sqlalchemy style?).
     def _build_where(self) -> str:
+        query = "WHERE {} IS NOT NULL".format(self.TS_FIELD)
+
         where = self._where
         if not where:
-            # Make it true.
-            where = "1 = 1", ()
+            return self._transform_col_name(query)
+
+        query = self._transform_col_name(query + " AND " + where[0])
+        args = where[1]
 
         # This is not 100% foolproof. Might cause some weird issues if we have field that follows gsheet
         # column naming format e.g. A, B, etc. need to find better way.
-        cond, args = self.WHERE_TEMPLATE.format(self.TS_FIELD, where[0]), where[1]
-        for field, col in self._col_mapping.items():
-            cond = cond.replace(field, col)
-
-        cond_parts = cond.split("?")
-        parts = cond_parts + list(args)
-        parts[::2] = cond_parts
+        query_parts = query.split("?")
+        parts = query_parts + list(args)
+        parts[::2] = query_parts
         parts[1::2] = map(self._convert_arg, list(args))
-        return "where " + "".join(map(str, parts))
+        return "".join(map(str, parts))
+
+    def _transform_col_name(self, query: str) -> str:
+        for field, col in self._col_mapping.items():
+            query = query.replace(field, col)
+        return query
 
     def _convert_arg(self, arg: Any) -> Any:
         if isinstance(arg, str):
@@ -96,7 +103,7 @@ class QueryBuilder:
         if not self._limit:
             return ""
 
-        return "limit {}".format(self._limit)
+        return "LIMIT {}".format(self._limit)
 
     def offset(self, offset: int) -> "QueryBuilder":
         self._validate_offset(offset)
@@ -111,14 +118,14 @@ class QueryBuilder:
         if not self._offset:
             return ""
 
-        return "offset {}".format(self._offset)
+        return "OFFSET {}".format(self._offset)
 
     def build_select(self, columns: List[str]) -> str:
         cols = []
         for col in columns:
             cols.append(self._col_mapping[col])
 
-        parts = ["select " + ",".join(cols)]
+        parts = ["SELECT " + ",".join(cols)]
         parts.append(self._build_where())
         parts.append(self._build_order_by())
         parts.append(self._build_limit())
@@ -128,43 +135,37 @@ class QueryBuilder:
         return " ".join(parts)
 
 
-class SelectStmt:
-    def __init__(
-        self,
-        wrapper: GoogleSheetWrapper,
-        spreadsheet_id: str,
-        sheet_name: str,
-        selected_columns: List[str],
-        columns: List[str],
-    ):
-        self._wrapper = wrapper
-        self._spreadsheet_id = spreadsheet_id
-        self._sheet_name = sheet_name
-        self._columns = columns
+class SelectStmt(Generic[T]):
+    def __init__(self, store: "GoogleSheetRowStore[T]", selected_columns: List[str]):
+        self._wrapper = store._wrapper
+        self._object_klass = store._object_klass
+        self._spreadsheet_id = store._spreadsheet_id
+        self._sheet_name = store._sheet_name
+        self._columns = store._columns
 
-        a1_col_mapping = get_a1_column_mapping(columns)
+        a1_col_mapping = get_a1_column_mapping(self._columns)
         self._query = QueryBuilder(a1_col_mapping)
         self._col_mapping = a1_col_mapping
         self._field_by_col = {col: field for field, col in self._col_mapping.items()}
         self._selected_columns = selected_columns
 
-    def where(self, condition: str, *args: Any) -> "SelectStmt":
+    def where(self, condition: str, *args: Any) -> "SelectStmt[T]":
         self._query.where(condition, *args)
         return self
 
-    def limit(self, limit: int) -> "SelectStmt":
+    def limit(self, limit: int) -> "SelectStmt[T]":
         self._query.limit(limit)
         return self
 
-    def offset(self, offset: int) -> "SelectStmt":
+    def offset(self, offset: int) -> "SelectStmt[T]":
         self._query.offset(offset)
         return self
 
-    def order_by(self, **kwargs: Ordering) -> "SelectStmt":
+    def order_by(self, **kwargs: Ordering) -> "SelectStmt[T]":
         self._query.order_by(**kwargs)
         return self
 
-    def execute(self) -> List[Dict[str, Any]]:
+    def execute(self) -> List[T]:
         rows = self._wrapper.query(
             self._spreadsheet_id,
             self._sheet_name,
@@ -176,7 +177,7 @@ class SelectStmt:
             row_result = {}
             for k, v in row.items():
                 row_result[self._field_by_col[k]] = v
-            results.append(row_result)
+            results.append(self._object_klass(**row_result))
 
         return results
 
@@ -312,23 +313,25 @@ class DeleteStmt:
         return len(update_candidate_indices)
 
 
-class GoogleSheetRowStore:
+class GoogleSheetRowStore(Generic[T]):
     SCRATCHPAD_BOOKED_VALUE = "BOOKED"
     SCRATCHPAD_SUFFIX = "_scratch"
-    TS_COLUMN_NAME = "_ts"
+    ID_COLUMN_NAME = "_rid"
+    PROTOCOL_VERSION = "v1"
 
     def __init__(
         self,
         auth_client: GoogleAuthClient,
         spreadsheet_id: str,
         sheet_name: str,
-        columns: List[str],
+        object_klass: Type[T],
         codec: Codec = BasicCodec(),
     ):
         self._auth_client = auth_client
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
-        self._columns = columns + [self.TS_COLUMN_NAME]
+        self._object_klass = object_klass
+        self._columns = self._get_columns(object_klass) + [self.ID_COLUMN_NAME]
         self._codec = codec
 
         self._scratchpad_name = sheet_name + self.SCRATCHPAD_SUFFIX
@@ -337,6 +340,9 @@ class GoogleSheetRowStore:
         self._ensure_headers()
         self._book_scratchpad_cell()
         self._closed = False
+
+    def _get_columns(self, object_klass: Type[T]) -> List[str]:
+        return [name for (name, _) in object_klass._fields]
 
     def _book_scratchpad_cell(self) -> None:
         result = self._wrapper.overwrite_rows(
@@ -361,26 +367,31 @@ class GoogleSheetRowStore:
     def _ensure_headers(self) -> None:
         self._wrapper.update_rows(self._spreadsheet_id, A1Range(self._sheet_name), [self._columns])
 
-    def select(self, *columns: str) -> SelectStmt:
+    def select(self, *columns: str) -> SelectStmt[T]:
         selected_columns = list(columns)
         if len(selected_columns) == 0:
             selected_columns = self._columns[:-1]  # Exclude the _ts field.
 
-        return SelectStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, selected_columns, self._columns)
+        return SelectStmt(self, selected_columns)
 
-    def insert(self, rows: List[Dict[str, Any]]) -> InsertStmt:
+    def insert(self, rows: List[T]) -> InsertStmt:
         # _ts field is required to help us select non-empty rows.
-        rows_with_ts = []
+        row_dicts = []
         for row in rows:
-            row = row.copy()
-            row[self.TS_COLUMN_NAME] = time.time()
-            rows_with_ts.append(row)
+            row_dict = row.asdict()
+            row_dict[self.ID_COLUMN_NAME] = "=ROW()"
+            row_dicts.append(row_dict)
 
-        return InsertStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._columns, rows_with_ts)
+        return InsertStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._columns, row_dicts)
 
-    def update(self, value: Dict[str, Any]) -> UpdateStmt:
+    def update(self, update_value: Dict[str, Any]) -> UpdateStmt:
         return UpdateStmt(
-            self._wrapper, self._spreadsheet_id, self._sheet_name, self._scratchpad_cell, self._columns, value
+            self._wrapper,
+            self._spreadsheet_id,
+            self._sheet_name,
+            self._scratchpad_cell,
+            self._columns,
+            update_value,
         )
 
     def delete(self) -> DeleteStmt:

@@ -1,6 +1,6 @@
 import dataclasses
 import inspect
-from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union, cast
 
 
 # To differentiate between fields that are not set and Null
@@ -50,17 +50,15 @@ class StringField(Field[str]):
 
 
 class meta(type):
-    _fields: List[Tuple[str, Any]]
-    _data: Any
-
     def __new__(cls, name: str, bases: Any, dct: Any) -> "meta":
         new_cls = super().__new__(cls, name, bases, dct)
+        # TODO(fata.nugarha): disallow field with name = _rid.
 
         fields = []
         for field, value in dct.items():
             if isinstance(value, Field):
                 fields.append((field, value))
-        new_cls._fields = fields
+        setattr(new_cls, "_fields", fields)
 
         dataclasses_fields = []
         for (field_name, field) in fields:
@@ -88,4 +86,9 @@ class meta(type):
 
 
 class Model(metaclass=meta):
-    pass
+    _fields: List[Tuple[str, Any]]
+    _data: Any
+
+    def asdict(self) -> Dict[str, Any]:
+        d = dataclasses.asdict(self._data)
+        return {k: v for k, v in d.items() if v is not NotSet}
