@@ -1,6 +1,7 @@
 import pytest
 
 from pyfreeleh.row import GoogleSheetRowStore, Ordering, models
+from pyfreeleh.row.base import OrderingDesc
 
 from .conftest import IntegrationTestConfig
 
@@ -32,13 +33,17 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
     ]
     row_store.insert(rows).execute()
 
+    # After we call Insert, the rid will be updated.
+    for idx, row in enumerate(rows):
+        assert row.rid == idx + 2  # Index stars from 2.
+
     # Sheet no longer empty, expects it returns 3 rows.
     returned_rows = row_store.select("name", "age", "dob").execute()
     assert returned_rows == rows
 
     # More complex select (multiple args)?
     rows = row_store.select("name", "age").where("age < ? AND age > ?", 12, 10).execute()
-    assert rows == [Customer(name="name2", age=11)]
+    assert rows == [Customer(rid=3, name="name2", age=11)]
 
     # Update one of the row, expects only 1 rows that changed.
     rows_changed = row_store.update({"name": "name4"}).where("age = ?", 10).execute()
@@ -49,15 +54,18 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
     assert rows_changed == 3
 
     # It should reflect the previous update and return in descending order by age.
-    rows = row_store.select("name").order_by(age=Ordering.DESC).execute()
-    assert rows == [Customer(name="name3"), Customer(name="name2"), Customer(name="name4")]
+    rows = row_store.select("name").order_by(OrderingDesc("age")).execute()
+    assert rows == [Customer(rid=4, name="name3"), Customer(rid=3, name="name2"), Customer(rid=2, name="name4")]
 
     # Delete with where clause.
     rows_deleted = row_store.delete().where("name = ?", "name2").execute()
     assert rows_deleted == 1
 
     rows = row_store.select("name").execute()
-    assert rows == [Customer(name="name4"), Customer(name="name3")]
+    assert rows == [Customer(rid=2, name="name4"), Customer(rid=4, name="name3")]
+
+    # Count should works.
+    assert 2 == row_store.count().execute()
 
     # Delete all rows.
     rows_deleted = row_store.delete().execute()
@@ -65,6 +73,3 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
 
     rows = row_store.select("name").execute()
     assert rows == []
-
-    row_store.close()
-    return row_store

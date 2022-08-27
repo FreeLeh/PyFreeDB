@@ -124,9 +124,11 @@ class GoogleSheetWrapper:
 
         return results
 
-    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[Dict[str, str]]:
+    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[Dict[str, Any]]:
         auth_token = "Bearer " + self._auth_client.credentials().token
         headers = {"contentType": "application/json", "Authorization": auth_token}
+
+        print(query)
 
         params: Dict[str, Union[str, int]] = {
             "sheet": sheet_name,
@@ -138,6 +140,7 @@ class GoogleSheetWrapper:
         url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
         r = requests.get(url=url, params=params, headers=headers)
         r.raise_for_status()
+        print(r.text)
         return self._convert_query_result(r.text)
 
     def _convert_query_result(self, response: str) -> List[Dict[str, Any]]:
@@ -169,10 +172,14 @@ class GoogleSheetWrapper:
         if typ == "boolean":
             return cell["v"]
         elif typ == "number":
-            if "." in cell["f"]:
-                return float(cell["f"])
+            if "f" in cell:
+                if "." in cell["f"]:
+                    return float(cell["f"])
 
-            return int(cell["f"])
+                return int(cell["f"])
+
+            # computed data doesn't have raw value.
+            return int(cell["v"])
         elif typ == "string":
             return cell["v"]
         elif typ in ["date", "datetime", "timeofday"]:
@@ -192,7 +199,7 @@ class GoogleSheetSession:
 
     def _ensure(self):
         try:
-            self._wrapper.create_sheet(self.spreadsheet_id, self._scratchpad_name)
+            self._wrapper.create_sheet(self.spreadsheet_id, self.sheet_name)
         except Exception:
             pass
 
@@ -213,23 +220,3 @@ class GoogleSheetSession:
 
     def query(self, query: str, has_header: bool = True) -> List[Dict[str, str]]:
         return self._wrapper.query(self.spreadsheet_id, self.sheet_name, query, has_header)
-
-
-class GoogleSheetScratchpad:
-    SCRATCHPAD_BOOKED_VALUE = "BOOKED"
-
-    def __init__(self, session: GoogleSheetSession) -> None:
-        self._session = session
-        self._scratchpad_cell = self._book_scratchpad_cell()
-
-    def _book_scratchpad_cell(self) -> A1Range:
-        a1_range = A1Range.from_notation(self._session.sheet_name)
-        result = self._session.overwrite_rows(a1_range, [[self.SCRATCHPAD_BOOKED_VALUE]])
-        self._scratchpad_cell = result.updated_range
-
-    def execute(self, formula: str) -> Any:
-        result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
-        return result.updated_values[0][0]
-
-    def close(self):
-        self._wrapper.clear(self._spreadsheet_id, [self._scratchpad_cell])

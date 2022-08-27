@@ -1,12 +1,12 @@
-from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, Generic, List, Mapping, Optional, Tuple, Type, TypeVar
 
-from pyfreeleh.base import Codec, InvalidOperationError
-from pyfreeleh.codec import BasicCodec
 from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
-from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
-from pyfreeleh.row.base import Ordering
-from pyfreeleh.row.models import Model
+from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetSession, GoogleSheetWrapper
+from pyfreeleh.row.base import Ordering, OrderingAsc, OrderingDesc
+from pyfreeleh.row.models import Model, PrimaryKeyField
+from pyfreeleh.row.query_builder import GoogleSheetQueryBuilder
+from pyfreeleh.row.serializers import FieldColumnMapper, ModelGoogleSheetSerializer, Serializer
 
 
 class InvalidQuery(Exception):
@@ -16,141 +16,62 @@ class InvalidQuery(Exception):
 T = TypeVar("T", bound=Model)
 
 
-class QueryBuilder:
-    TS_FIELD = "_rid"
+def map_orderings(mapper: FieldColumnMapper, orderings: List[Ordering]) -> List[Ordering]:
+    mapped_orderings = []
+    for order in orderings:
+        col_name = mapper.to_column(order._field_name)
 
-    def __init__(self, col_mapping: Dict[str, str]):
-        self._where: Optional[Tuple[str, Tuple[Any, ...]]] = None
-        self._orderings: List[Tuple[str, Ordering]] = []
-        self._limit: int = 0
-        self._offset: int = 0
+        if isinstance(order, OrderingAsc):
+            mapped_orderings.append(OrderingAsc(col_name))
+        elif isinstance(order, OrderingDesc):
+            mapped_orderings.append(OrderingDesc(col_name))
 
-        self._col_mapping = col_mapping
+    return mapped_orderings
 
-    def where(self, condition: str, *args: Any) -> "QueryBuilder":
-        self._validate_where(condition, args)
-        self._where = (condition, args)
+
+def map_conditions(mapper: FieldColumnMapper, condition: str) -> str:
+    for column, field in mapper.field_by_col().items():
+        condition = condition.replace(field, column)
+    return condition
+
+
+class CountStmt(Generic[T]):
+    def __init__(
+        self,
+        sheet_session: GoogleSheetSession,
+    ):
+        self._sheet_session = sheet_session
+
+        self._query = GoogleSheetQueryBuilder()
+
+    def where(self, condition: str, *args: Any) -> "SelectStmt[T]":
+        mapped_conditions = map_conditions(self._mapper, condition)
+        self._query.where(mapped_conditions, *args)
         return self
 
-    def _validate_where(self, cond: str, args: Any) -> None:
-        if cond.count("?") != len(args):
-            raise InvalidQuery("number of placeholder and argument is not equal")
-
-    # TODO(fata.nugraha): find better interface to do this (maybe follow django/sqlalchemy style?).
-    def _build_where(self) -> str:
-        query = "WHERE {} IS NOT NULL".format(self.TS_FIELD)
-
-        where = self._where
-        if not where:
-            return self._transform_col_name(query)
-
-        query = self._transform_col_name(query + " AND " + where[0])
-        args = where[1]
-
-        # This is not 100% foolproof. Might cause some weird issues if we have field that follows gsheet
-        # column naming format e.g. A, B, etc. need to find better way.
-        query_parts = query.split("?")
-        parts = query_parts + list(args)
-        parts[::2] = query_parts
-        parts[1::2] = map(self._convert_arg, list(args))
-        return "".join(map(str, parts))
-
-    def _transform_col_name(self, query: str) -> str:
-        for field, col in self._col_mapping.items():
-            query = query.replace(field, col)
-        return query
-
-    def _convert_arg(self, arg: Any) -> Any:
-        if isinstance(arg, str):
-            return '"{}"'.format(arg)
-
-        return arg
-
-    def order_by(self, **kwargs: Ordering) -> "QueryBuilder":
-        self._validate_order_by(kwargs)
-
-        # Note that starting from python 3.7 the dict ordering is guaranteed to be the same as its item insertion
-        # ordering.
-        for k, order in kwargs.items():
-            self._orderings.append((k, order))
-        return self
-
-    def _validate_order_by(self, order_map: Dict[str, Ordering]) -> None:
-        for key in order_map:
-            if key not in self._col_mapping:
-                raise InvalidQuery("unrecognised field {}".format(key))
-
-    def _build_order_by(self) -> str:
-        if not self._orderings:
-            return ""
-
-        parts = []
-        for k, order in self._orderings:
-            parts.append(self._col_mapping[k] + " " + order.value)
-
-        return "order by " + "".join(parts)
-
-    def limit(self, limit: int) -> "QueryBuilder":
-        self._validate_limit(limit)
-        self._limit = limit
-        return self
-
-    def _validate_limit(self, limit: int) -> None:
-        if limit < 0:
-            raise InvalidQuery("limit can't be less than 0")
-
-    def _build_limit(self) -> str:
-        if not self._limit:
-            return ""
-
-        return "LIMIT {}".format(self._limit)
-
-    def offset(self, offset: int) -> "QueryBuilder":
-        self._validate_offset(offset)
-        self._offset = offset
-        return self
-
-    def _validate_offset(self, offset: int) -> None:
-        if offset < 0:
-            raise InvalidQuery("offset can't be less than 0")
-
-    def _build_offset(self) -> str:
-        if not self._offset:
-            return ""
-
-        return "OFFSET {}".format(self._offset)
-
-    def build_select(self, columns: List[str]) -> str:
-        cols = []
-        for col in columns:
-            cols.append(self._col_mapping[col])
-
-        parts = ["SELECT " + ",".join(cols)]
-        parts.append(self._build_where())
-        parts.append(self._build_order_by())
-        parts.append(self._build_limit())
-        parts.append(self._build_offset())
-
-        parts = [part for part in parts if part]
-        return " ".join(parts)
+    def execute(self) -> int:
+        rows = self._sheet_session.query(self._query.build_select(["COUNT(A)"]))
+        return int(rows[0]["count-A"])
 
 
 class SelectStmt(Generic[T]):
-    def __init__(self, store: "GoogleSheetRowStore[T]", selected_columns: List[str]):
-        self._wrapper = store._wrapper
-        self._object_klass = store._object_klass
-        self._spreadsheet_id = store._spreadsheet_id
-        self._sheet_name = store._sheet_name
-        self._columns = store._columns
-
-        a1_col_mapping = get_a1_column_mapping(self._columns)
-        self._query = QueryBuilder(a1_col_mapping)
-        self._col_mapping = a1_col_mapping
-        self._field_by_col = {col: field for field, col in self._col_mapping.items()}
+    def __init__(
+        self,
+        sheet_session: GoogleSheetSession,
+        serializer: Serializer[T],
+        mapper: FieldColumnMapper,
+        selected_columns: List[str],
+    ):
+        self._sheet_session = sheet_session
+        self._serializer = serializer
+        self._mapper = mapper
         self._selected_columns = selected_columns
 
+        self._query = GoogleSheetQueryBuilder()
+
     def where(self, condition: str, *args: Any) -> "SelectStmt[T]":
-        self._query.where(condition, *args)
+        mapped_conditions = map_conditions(self._mapper, condition)
+        self._query.where(mapped_conditions, *args)
         return self
 
     def limit(self, limit: int) -> "SelectStmt[T]":
@@ -161,263 +82,184 @@ class SelectStmt(Generic[T]):
         self._query.offset(offset)
         return self
 
-    def order_by(self, **kwargs: Ordering) -> "SelectStmt[T]":
-        self._query.order_by(**kwargs)
+    def order_by(self, *orderings: Ordering) -> "SelectStmt[T]":
+        mapped_orderings = map_orderings(self._mapper, orderings)
+        self._query.order_by(*mapped_orderings)
         return self
 
     def execute(self) -> List[T]:
-        rows = self._wrapper.query(
-            self._spreadsheet_id,
-            self._sheet_name,
-            self._query.build_select(self._selected_columns),
-        )
+        mapped_columns = []
+        for col in self._selected_columns:
+            mapped_columns.append(self._mapper.to_column(col))
+
+        if "A" not in mapped_columns:
+            mapped_columns.insert(0, "A")
+
+        rows = self._sheet_session.query(self._query.build_select(mapped_columns))
 
         results = []
         for row in rows:
-            row_result = {}
-            for k, v in row.items():
-                row_result[self._field_by_col[k]] = v
-            results.append(self._object_klass(**row_result))
+            results.append(self._serializer.deserialize(row))
 
         return results
 
 
-class InsertStmt:
+class InsertStmt(Generic[T]):
     def __init__(
         self,
-        wrapper: GoogleSheetWrapper,
-        spreadsheet_id: str,
-        sheet_name: str,
-        columns: List[str],
-        rows: List[Dict[str, str]],
+        sheet_session: GoogleSheetSession,
+        serializer: Serializer[T],
+        rows: List[T],
     ):
-        self._wrapper = wrapper
-        self._spreadsheet_id = spreadsheet_id
-        self._sheet_name = sheet_name
-        self._columns = columns
+        self._sheet_session = sheet_session
+        self._serializer = serializer
         self._rows = rows
 
-        a1_col_mapping = get_a1_column_mapping(columns)
-        self._query = QueryBuilder(a1_col_mapping)
-        self._col_mapping = a1_col_mapping
-        self._field_by_col = {col: field for field, col in self._col_mapping.items()}
+        self._query = GoogleSheetQueryBuilder()
 
     def execute(self) -> None:
         raw_values = self._get_raw_values()
-        self._wrapper.overwrite_rows(self._spreadsheet_id, A1Range.from_notation(self._sheet_name), raw_values)
+        result = self._sheet_session.overwrite_rows(A1Range.from_notation(self._sheet_session.sheet_name), raw_values)
+
+        # TODO(fata.nugraha): think about how to set rid back.
+        # we should not assume rid is the primary key.
+        for idx, row in enumerate(result.inserted_values):
+            self._rows[idx].rid = int(row[0])
 
     def _get_raw_values(self) -> List[List[str]]:
         raw_values = []
-        for row in self._rows:
-            raw_values.append(self._to_values_row(row))
-        return raw_values
 
-    def _to_values_row(self, row: Dict[str, str]) -> List[str]:
-        result = []
-        for col in self._columns:
-            result.append(row.get(col, ""))
-        return result
+        for row in self._rows:
+            serialized = self._serializer.serialize(row)
+            # TODO(fata.nugraha): assumption A is the pk
+            serialized.pop("A", None)
+            raw_values.append(["=ROW()"] + list(serialized.values()))
+
+        return raw_values
 
 
 class UpdateStmt:
-    INDICES_FORMULA_TEMPLATE = '=JOIN(",", ARRAYFORMULA(QUERY({{{data_range}, ROW({data_range})}}, "{query}")))'
-    ROW_IDX_FIELD = "_idx"
-
     def __init__(
         self,
-        wrapper: GoogleSheetWrapper,
-        spreadsheet_id: str,
-        sheet_name: str,
-        scratchpad_cell: A1Range,
-        columns: List[str],
+        sheet_session: GoogleSheetSession,
+        mapper: FieldColumnMapper,
         update_values: Dict[str, str],
     ):
-        self._val = update_values
-        self._wrapper = wrapper
-        self._sheet_name = sheet_name
-        self._spreadsheet_id = spreadsheet_id
-        self._scratchpad_cell = scratchpad_cell
-        self._columns = columns
+        self._sheet_session = sheet_session
+        self._mapper = mapper
+        self._update_values = update_values
 
-        c1_col_mapping = get_col_idx_column_mapping(self._columns + [self.ROW_IDX_FIELD])
-        self._query = QueryBuilder(c1_col_mapping)
+        self._query = GoogleSheetQueryBuilder()
 
     def where(self, condition: str, *args: Any) -> "UpdateStmt":
-        self._query.where(condition, *args)
+        mapped_condition = map_conditions(self._mapper, condition)
+        self._query.where(mapped_condition, *args)
         return self
 
     def execute(self) -> int:
-        data_range = A1Range(self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(len(self._columns)))
-        query = self._query.build_select([self.ROW_IDX_FIELD]).replace('"', '""')
-        formula = self.INDICES_FORMULA_TEMPLATE.format(data_range=str(data_range), query=query)
-
-        result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
-        update_candidate_indices = [int(idx) for idx in result.updated_values[0][0].split(",") if idx]
+        # TODO(fata.nugraha): assumption pk is in the first cell
+        affected_rows = self._sheet_session.query(self._query.build_select(["A"]))
+        update_candidate_indices = [int(row["A"]) for row in affected_rows]
 
         requests = []
         for row_idx in update_candidate_indices:
-            for col_idx, col in enumerate(self._columns):
-                if col not in self._val:
+            for col_idx, col in enumerate(self._mapper._col_name_by_field):
+                if col not in self._update_values:
                     continue
 
                 cell_selector = A1CellSelector.from_rc(col_idx + 1, row_idx)
-                update_range = A1Range(self._sheet_name, cell_selector, cell_selector)
-                requests.append(BatchUpdateRowsRequest(update_range, [[self._val[col]]]))
+                update_range = A1Range(self._sheet_session.sheet_name, cell_selector, cell_selector)
+                requests.append(BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
 
-        self._wrapper.batch_update_rows(self._spreadsheet_id, requests)
+        self._sheet_session.batch_update_rows(requests)
         return len(update_candidate_indices)
 
 
 class DeleteStmt:
-    INDICES_FORMULA_TEMPLATE = '=JOIN(",", ARRAYFORMULA(QUERY({{{}, ROW({})}}, "{}")))'
-    ROW_IDX_FIELD = "_idx"
-
     def __init__(
         self,
-        wrapper: GoogleSheetWrapper,
-        spreadsheet_id: str,
-        sheet_name: str,
-        scratchpad_cell: A1Range,
-        columns: List[str],
+        sheet_session: GoogleSheetSession,
+        mapper: FieldColumnMapper,
     ):
-        self._wrapper = wrapper
-        self._sheet_name = sheet_name
-        self._spreadsheet_id = spreadsheet_id
-        self._scratchpad_cell = scratchpad_cell
-        self._columns = columns
+        self._sheet_session = sheet_session
+        self._mapper = mapper
 
-        c1_col_mapping = get_col_idx_column_mapping(self._columns + [self.ROW_IDX_FIELD])
-        self._query = QueryBuilder(c1_col_mapping)
+        self._query = GoogleSheetQueryBuilder()
 
     def where(self, condition: str, *args: Any) -> "DeleteStmt":
-        self._query.where(condition, *args)
+        mapped_condition = map_conditions(self._mapper, condition)
+        self._query.where(mapped_condition, *args)
         return self
 
     def execute(self) -> int:
-        location = str(
-            A1Range(self._sheet_name, A1CellSelector.from_rc(1, 2), A1CellSelector.from_rc(column=len(self._columns)))
-        )
-        query = self._query.build_select([self.ROW_IDX_FIELD]).replace('"', '""')
-        formula = self.INDICES_FORMULA_TEMPLATE.format(location, location, query)
-
-        result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
-        update_candidate_indices = [int(idx) for idx in result.updated_values[0][0].split(",") if idx]
+        # TODO(fata.nugraha): assumption pk is in the first cell
+        affected_rows = self._sheet_session.query(self._query.build_select(["A"]))
+        update_candidate_indices = [int(row["A"]) for row in affected_rows]
 
         requests = []
         for row_idx in update_candidate_indices:
             row_selector = A1CellSelector.from_rc(row=row_idx)
-            requests.append(A1Range(self._sheet_name, start=row_selector, end=row_selector))
+            requests.append(A1Range(self._sheet_session.sheet_name, start=row_selector, end=row_selector))
 
-        self._wrapper.clear(self._spreadsheet_id, requests)
+        self._sheet_session.clear(requests)
 
         return len(update_candidate_indices)
 
 
 class GoogleSheetRowStore(Generic[T]):
-    SCRATCHPAD_BOOKED_VALUE = "BOOKED"
-    SCRATCHPAD_SUFFIX = "_scratch"
-    ID_COLUMN_NAME = "_rid"
-    PROTOCOL_VERSION = "v1"
-
     def __init__(
         self,
         auth_client: GoogleAuthClient,
         spreadsheet_id: str,
         sheet_name: str,
         object_klass: Type[T],
-        codec: Codec = BasicCodec(),
     ):
-        self._auth_client = auth_client
-        self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
         self._object_klass = object_klass
-        self._columns = self._get_columns(object_klass) + [self.ID_COLUMN_NAME]
-        self._codec = codec
 
-        self._scratchpad_name = sheet_name + self.SCRATCHPAD_SUFFIX
-        self._wrapper = GoogleSheetWrapper(auth_client)
-        self._ensure_sheet()
+        wrapper = GoogleSheetWrapper(auth_client)
+        self._sheet_session = GoogleSheetSession(wrapper, spreadsheet_id, sheet_name)
         self._ensure_headers()
-        self._book_scratchpad_cell()
-        self._closed = False
 
-    def _get_columns(self, object_klass: Type[T]) -> List[str]:
-        return [name for (name, _) in object_klass._fields]
-
-    def _book_scratchpad_cell(self) -> None:
-        result = self._wrapper.overwrite_rows(
-            self._spreadsheet_id,
-            A1Range.from_notation(self._scratchpad_name),
-            [[self.SCRATCHPAD_BOOKED_VALUE]],
-        )
-
-        self._scratchpad_cell = result.updated_range
-
-    def _ensure_sheet(self) -> None:
-        try:
-            self._sheet_id = self._wrapper.create_sheet(self._spreadsheet_id, self._sheet_name)
-        except Exception:
-            pass
-
-        try:
-            self._scratchpad_sheet_id = self._wrapper.create_sheet(self._spreadsheet_id, self._scratchpad_name)
-        except Exception:
-            pass
+        self._columns = list(object_klass._fields.keys())
+        self._serializer = ModelGoogleSheetSerializer(object_klass)
+        self._mapper = FieldColumnMapper(object_klass)
 
     def _ensure_headers(self) -> None:
-        self._wrapper.update_rows(self._spreadsheet_id, A1Range(self._sheet_name), [self._columns])
+        column_headers = []
+        for field in self._object_klass._fields.values():
+            column_headers.append(field._column_name)
+
+        self._sheet_session.update_rows(A1Range(self._sheet_name), [column_headers])
 
     def select(self, *columns: str) -> SelectStmt[T]:
         selected_columns = list(columns)
         if len(selected_columns) == 0:
-            selected_columns = self._columns[:-1]  # Exclude the _ts field.
+            selected_columns = self._columns
 
-        return SelectStmt(self, selected_columns)
+        return SelectStmt(self._sheet_session, self._serializer, self._mapper, selected_columns)
 
     def insert(self, rows: List[T]) -> InsertStmt:
-        # _ts field is required to help us select non-empty rows.
-        row_dicts = []
-        for row in rows:
-            row_dict = row.asdict()
-            row_dict[self.ID_COLUMN_NAME] = "=ROW()"
-            row_dicts.append(row_dict)
+        return InsertStmt(self._sheet_session, self._serializer, rows)
 
-        return InsertStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._columns, row_dicts)
+    def _get_pk_field_name(self):
+        for field in self._object_klass._fields.values():
+            if isinstance(field, PrimaryKeyField):
+                return field._field_name
+
+        # TODO(fata.nugraha): move this to model meta instead.
+        raise Exception("model must have exactly one PrimaryKeyField")
 
     def update(self, update_value: Dict[str, Any]) -> UpdateStmt:
-        return UpdateStmt(
-            self._wrapper,
-            self._spreadsheet_id,
-            self._sheet_name,
-            self._scratchpad_cell,
-            self._columns,
-            update_value,
-        )
+        update_value = update_value.copy()
+
+        pk_col_name = self._get_pk_field_name()
+        update_value.pop(pk_col_name, None)
+
+        return UpdateStmt(self._sheet_session, self._mapper, update_value)
 
     def delete(self) -> DeleteStmt:
-        return DeleteStmt(self._wrapper, self._spreadsheet_id, self._sheet_name, self._scratchpad_cell, self._columns)
+        return DeleteStmt(self._sheet_session, self._mapper)
 
-    def close(self) -> None:
-        self._ensure_initialised()
-
-        self._wrapper.clear(self._spreadsheet_id, [self._scratchpad_cell])
-        self._closed = True
-
-    def _ensure_initialised(self) -> None:
-        if self._closed:
-            raise InvalidOperationError
-
-
-def get_a1_column_mapping(columns: List[str]) -> Dict[str, str]:
-    result = {}
-    for idx, col in enumerate(columns):
-        result[col] = str(A1CellSelector.from_rc(column=idx + 1))
-
-    return result
-
-
-def get_col_idx_column_mapping(columns: List[str]) -> Dict[str, str]:
-    result = {}
-    for idx, col in enumerate(columns):
-        result[col] = "Col" + str(idx + 1)
-    return result
+    def count(self) -> CountStmt:
+        return CountStmt(self._sheet_session)

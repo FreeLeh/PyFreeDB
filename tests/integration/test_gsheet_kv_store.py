@@ -8,26 +8,26 @@ from pyfreeleh.kv.gsheet import GoogleSheetKVStore
 from .conftest import IntegrationTestConfig
 
 
-@pytest.mark.integration
-def test_gsheet_kv_store_append_mode_integration(config: IntegrationTestConfig):
-    kv_store = GoogleSheetKVStore(
-        config.auth_client,
-        spreadsheet_id=config.spreadsheet_id,
-        sheet_name="kv_append_mode",
-        mode=GoogleSheetKVStore.APPEND_ONLY_MODE,
-    )
-    kv_store_integration(kv_store)
+# @pytest.mark.integration
+# def test_gsheet_kv_store_append_mode_integration(config: IntegrationTestConfig):
+#     kv_store = GoogleSheetKVStore(
+#         config.auth_client,
+#         spreadsheet_id=config.spreadsheet_id,
+#         sheet_name="kv_append_mode",
+#         mode=GoogleSheetKVStore.APPEND_ONLY_MODE,
+#     )
+#     kv_store_integration(kv_store)
 
 
-@pytest.mark.integration
-def test_gsheet_kv_store_default_mode_integration(config: IntegrationTestConfig):
-    kv_store = GoogleSheetKVStore(
-        config.auth_client,
-        spreadsheet_id=config.spreadsheet_id,
-        sheet_name="kv_default",
-        mode=GoogleSheetKVStore.DEFAULT_MODE,
-    )
-    kv_store_integration(kv_store)
+# @pytest.mark.integration
+# def test_gsheet_kv_store_default_mode_integration(config: IntegrationTestConfig):
+#     kv_store = GoogleSheetKVStore(
+#         config.auth_client,
+#         spreadsheet_id=config.spreadsheet_id,
+#         sheet_name="kv_default",
+#         mode=GoogleSheetKVStore.DEFAULT_MODE,
+#     )
+#     kv_store_integration(kv_store)
 
 
 def kv_store_integration(kv_store: GoogleSheetKVStore):

@@ -5,7 +5,7 @@ from pyfreeleh.providers.google.sheet.base import A1CellSelector
 from pyfreeleh.row import models
 from pyfreeleh.row.models import Model
 
-T = TypeVar("T")
+T = TypeVar("T", bound=Model)
 
 
 class Serializer(abc.ABC, Generic[T]):
@@ -16,35 +16,34 @@ class Serializer(abc.ABC, Generic[T]):
         pass
 
 
-class ModelGoogleSheetSerializer(Serializer[Model]):
+class FieldColumnMapper:
     def __init__(self, model: Type[Model]):
         self._model = model
 
         self._col_name_by_field = self._get_col_name_mapping()
         self._field_by_col_name = {v: k for (k, v) in self._col_name_by_field.items()}
 
-        print(self._col_name_by_field)
+    def to_column(self, field: str) -> str:
+        return self._col_name_by_field[field]
 
-    def deserialize(self, data: Dict[str, Any]) -> Model:
-        value_by_field = {}
+    def to_field(self, column: str) -> str:
+        return self._field_by_col_name[column]
 
-        for col_name, value in data.items():
-            field_name = self._field_by_col_name[col_name]
-            value_by_field[field_name] = value
+    def column(self, idx: str) -> str:
+        for i, column in enumerate(self._field_by_col_name.keys()):
+            if i == idx:
+                return column
 
-        return self._model(**value_by_field)
+    def field(self, idx: str) -> str:
+        for i, field in enumerate(self._field_by_col_name.values()):
+            if i == idx:
+                return field
 
-    def serialize(self, obj: Model) -> Dict[str, Any]:
-        data = {}
+    def col_by_field(self) -> Dict[str, str]:
+        return self._col_name_by_field
 
-        for field, col_name in self._col_name_by_field.items():
-            value = getattr(obj, field)
-            if value is models.NotSet:
-                continue
-
-            data[col_name] = value
-
-        return data
+    def field_by_col(self) -> Dict[str, str]:
+        return self._field_by_col_name
 
     def _get_col_name_mapping(self) -> Dict[str, str]:
         result = {}
@@ -52,3 +51,30 @@ class ModelGoogleSheetSerializer(Serializer[Model]):
             result[field._field_name] = str(A1CellSelector.from_rc(column=idx + 1))
 
         return result
+
+
+class ModelGoogleSheetSerializer(Serializer[T]):
+    def __init__(self, model: Type[T]):
+        self._model = model
+        self._mapper = FieldColumnMapper(model)
+
+    def deserialize(self, data: Dict[str, Any]) -> T:
+        value_by_field = {}
+
+        for col_name, value in data.items():
+            field_name = self._mapper.to_field(col_name)
+            value_by_field[field_name] = value
+
+        return self._model(**value_by_field)
+
+    def serialize(self, obj: T) -> Dict[str, Any]:
+        data = {}
+
+        for field in self._model._fields:
+            value = getattr(obj, field)
+            if value is models.NotSet:
+                continue
+
+            data[self._mapper.to_column(field)] = value
+
+        return data

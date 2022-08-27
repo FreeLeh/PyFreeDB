@@ -22,6 +22,9 @@ class Field(Generic[T]):
     def __set_name__(self, _: Any, name: str) -> None:
         self._field_name = name
 
+        if self._column_name is None:
+            self._column_name = name
+
     def __get__(self, obj: Any, _: Any) -> Optional[T]:
         value = getattr(obj._data, self._field_name)
         return cast(Optional[T], value)
