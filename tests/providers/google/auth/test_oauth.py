@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from typing import Any
 
 import pytest
 
@@ -16,7 +17,7 @@ user_secret_info = {
 }
 
 
-def test_oauth2_file_integration(tmp_path):
+def test_oauth2_file_integration(tmp_path: Any) -> None:
     # Instantiate from user info dict should not raise exception.
     OAuth2GoogleAuthClient.from_authorized_user_info(user_secret_info)
 

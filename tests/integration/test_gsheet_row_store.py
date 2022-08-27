@@ -1,7 +1,6 @@
 import pytest
 
 from pyfreeleh.row import GoogleSheetRowStore, Ordering, models
-from pyfreeleh.row.base import OrderingDesc
 
 from .conftest import IntegrationTestConfig
 
@@ -54,7 +53,7 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
     assert rows_changed == 3
 
     # It should reflect the previous update and return in descending order by age.
-    rows = row_store.select("name").order_by(OrderingDesc("age")).execute()
+    rows = row_store.select("name").order_by(Ordering.DESC("age")).execute()
     assert rows == [Customer(rid=4, name="name3"), Customer(rid=3, name="name2"), Customer(rid=2, name="name4")]
 
     # Delete with where clause.

@@ -6,6 +6,7 @@ import time
 import pytest
 from googleapiclient.discovery import build
 
+from typing import Iterator
 from pyfreeleh.providers.google.auth import ServiceAccountGoogleAuthClient
 
 
@@ -23,7 +24,7 @@ def auth_client() -> ServiceAccountGoogleAuthClient:
 
 
 @pytest.fixture(scope="session")
-def spreadsheet(auth_client: ServiceAccountGoogleAuthClient) -> str:
+def spreadsheet(auth_client: ServiceAccountGoogleAuthClient) -> Iterator[str]:
     spreadsheet_id = os.getenv("T_SPREADSHEET_ID")
     if spreadsheet_id:
         yield spreadsheet_id
@@ -41,5 +42,5 @@ def spreadsheet(auth_client: ServiceAccountGoogleAuthClient) -> str:
 
 
 @pytest.fixture(scope="session")
-def config(auth_client, spreadsheet) -> IntegrationTestConfig:
+def config(auth_client: ServiceAccountGoogleAuthClient, spreadsheet: str) -> IntegrationTestConfig:
     return IntegrationTestConfig(auth_client=auth_client, spreadsheet_id=spreadsheet)

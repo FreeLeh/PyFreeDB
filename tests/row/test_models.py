@@ -12,7 +12,7 @@ class B(A):
     another_field = models.StringField()
 
 
-def test_model():
+def test_model() -> None:
     # Parent's field should come first.
     obj = B()
     b_fields = list(obj._fields.keys())

@@ -6,3 +6,4 @@ autoflake -c --remove-all-unused-imports -r tests/
 isort --check .
 black --check .
 mypy src/
+mypy tests/

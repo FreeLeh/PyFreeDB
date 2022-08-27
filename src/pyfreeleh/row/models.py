@@ -80,13 +80,13 @@ class meta(type):
         # how to store the data.
         dataclasses_fields = []
         for (field_name, field) in fields.items():
-            if field_name == "rid":
-                field_type = Union[field._typ, None, NotSet]
-            else:
-                field_type = Union[field._typ, NotSet]
-
             value = dataclasses.field(default=NotSet)
-            dataclasses_fields.append((field_name, cast(type, field_type), value))
+
+            if field_name == "rid":
+                dataclasses_fields.append((field_name, cast(type, Union[field._typ, None, NotSet]), value))
+            else:
+                dataclasses_fields.append((field_name, cast(type, Union[field._typ, NotSet]), value))
+
         data_klass = dataclasses.make_dataclass(name, dataclasses_fields)
 
         # TODO(fata.nugraha): figure out how to make the __init__ annotation is the same as dataclasses' __init__
@@ -109,11 +109,6 @@ class meta(type):
 
 
 class Model(metaclass=meta):
-    _fields: Dict[str, Field]
-    _data: Any
+    _fields: Dict[str, Union[IntegerField, FloatField, BoolField, StringField]]
 
     rid = PrimaryKeyField(column_name="_rid")
-
-    def asdict(self) -> Dict[str, Any]:
-        d = dataclasses.asdict(self._data)
-        return {k: v for k, v in d.items() if v is not NotSet}

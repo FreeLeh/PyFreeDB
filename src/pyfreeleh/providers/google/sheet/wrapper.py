@@ -197,7 +197,7 @@ class GoogleSheetSession:
         self._wrapper = wrapper
         self._ensure()
 
-    def _ensure(self):
+    def _ensure(self) -> None:
         try:
             self._wrapper.create_sheet(self.spreadsheet_id, self.sheet_name)
         except Exception:

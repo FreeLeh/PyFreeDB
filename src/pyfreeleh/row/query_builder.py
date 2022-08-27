@@ -8,9 +8,9 @@ class InvalidQuery(Exception):
 
 
 class GoogleSheetQueryBuilder:
-    def __init__(self):
+    def __init__(self) -> None:
         self._where: Optional[Tuple[str, Tuple[Any, ...]]] = None
-        self._orderings: List[Tuple[str, Ordering]] = []
+        self._orderings: List[Ordering] = []
         self._limit: int = 0
         self._offset: int = 0
 

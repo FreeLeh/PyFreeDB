@@ -29,15 +29,19 @@ class FieldColumnMapper:
     def to_field(self, column: str) -> str:
         return self._field_by_col_name[column]
 
-    def column(self, idx: str) -> str:
+    def column(self, idx: int) -> str:
         for i, column in enumerate(self._field_by_col_name.keys()):
             if i == idx:
                 return column
 
-    def field(self, idx: str) -> str:
+        raise ValueError
+
+    def field(self, idx: int) -> str:
         for i, field in enumerate(self._field_by_col_name.values()):
             if i == idx:
                 return field
+
+        raise ValueError
 
     def col_by_field(self) -> Dict[str, str]:
         return self._col_name_by_field

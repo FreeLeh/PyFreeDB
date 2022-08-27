@@ -5,9 +5,6 @@ import pytest
 from pyfreeleh.kv.base import KeyNotFoundError
 from pyfreeleh.kv.gsheet import GoogleSheetKVStore
 
-from .conftest import IntegrationTestConfig
-
-
 # @pytest.mark.integration
 # def test_gsheet_kv_store_append_mode_integration(config: IntegrationTestConfig):
 #     kv_store = GoogleSheetKVStore(
@@ -30,7 +27,7 @@ from .conftest import IntegrationTestConfig
 #     kv_store_integration(kv_store)
 
 
-def kv_store_integration(kv_store: GoogleSheetKVStore):
+def kv_store_integration(kv_store: GoogleSheetKVStore) -> None:
     return
     ensure_key_not_found(lambda: kv_store.get("k1"))
 
@@ -48,7 +45,7 @@ def kv_store_integration(kv_store: GoogleSheetKVStore):
     ensure_key_not_found(lambda: kv_store.get("k1"))
 
 
-def ensure_key_not_found(f: Callable[[str], bytes]):
+def ensure_key_not_found(f: Callable[[], bytes]) -> None:
     try:
         f()
         pytest.fail("should trigger except clause")

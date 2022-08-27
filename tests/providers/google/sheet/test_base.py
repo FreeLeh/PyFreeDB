@@ -1,14 +1,14 @@
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range
 
 
-def test_cell_selector():
+def test_cell_selector() -> None:
     assert A1CellSelector.from_notation("A") == A1CellSelector(column="A")
     assert A1CellSelector.from_notation("1") == A1CellSelector(row=1)
     assert A1CellSelector.from_notation("A1") == A1CellSelector(column="A", row=1)
     assert A1CellSelector.from_notation("AAA123") == A1CellSelector(column="AAA", row=123)
 
 
-def test_a1_range_notation():
+def test_a1_range_notation() -> None:
     testcases = [
         {
             "notation": "Sheet1!A1:B2",

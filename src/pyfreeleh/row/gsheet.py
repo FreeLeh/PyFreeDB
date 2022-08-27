@@ -1,9 +1,9 @@
-from typing import Any, Dict, Generic, List, Mapping, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, Generic, List, Type, TypeVar
 
 from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetSession, GoogleSheetWrapper
-from pyfreeleh.row.base import Ordering, OrderingAsc, OrderingDesc
+from pyfreeleh.row.base import Ordering
 from pyfreeleh.row.models import Model, PrimaryKeyField
 from pyfreeleh.row.query_builder import GoogleSheetQueryBuilder
 from pyfreeleh.row.serializers import FieldColumnMapper, ModelGoogleSheetSerializer, Serializer
@@ -20,11 +20,9 @@ def map_orderings(mapper: FieldColumnMapper, orderings: List[Ordering]) -> List[
     mapped_orderings = []
     for order in orderings:
         col_name = mapper.to_column(order._field_name)
-
-        if isinstance(order, OrderingAsc):
-            mapped_orderings.append(OrderingAsc(col_name))
-        elif isinstance(order, OrderingDesc):
-            mapped_orderings.append(OrderingDesc(col_name))
+        mapped_ordering = order.copy()
+        mapped_ordering._field_name = col_name
+        mapped_orderings.append(mapped_ordering)
 
     return mapped_orderings
 
@@ -35,16 +33,18 @@ def map_conditions(mapper: FieldColumnMapper, condition: str) -> str:
     return condition
 
 
-class CountStmt(Generic[T]):
+class CountStmt:
     def __init__(
         self,
         sheet_session: GoogleSheetSession,
+        mapper: FieldColumnMapper,
     ):
         self._sheet_session = sheet_session
+        self._mapper = mapper
 
         self._query = GoogleSheetQueryBuilder()
 
-    def where(self, condition: str, *args: Any) -> "SelectStmt[T]":
+    def where(self, condition: str, *args: Any) -> "CountStmt":
         mapped_conditions = map_conditions(self._mapper, condition)
         self._query.where(mapped_conditions, *args)
         return self
@@ -83,7 +83,7 @@ class SelectStmt(Generic[T]):
         return self
 
     def order_by(self, *orderings: Ordering) -> "SelectStmt[T]":
-        mapped_orderings = map_orderings(self._mapper, orderings)
+        mapped_orderings = map_orderings(self._mapper, list(orderings))
         self._query.order_by(*mapped_orderings)
         return self
 
@@ -239,10 +239,10 @@ class GoogleSheetRowStore(Generic[T]):
 
         return SelectStmt(self._sheet_session, self._serializer, self._mapper, selected_columns)
 
-    def insert(self, rows: List[T]) -> InsertStmt:
+    def insert(self, rows: List[T]) -> InsertStmt[T]:
         return InsertStmt(self._sheet_session, self._serializer, rows)
 
-    def _get_pk_field_name(self):
+    def _get_pk_field_name(self) -> str:
         for field in self._object_klass._fields.values():
             if isinstance(field, PrimaryKeyField):
                 return field._field_name
@@ -262,4 +262,4 @@ class GoogleSheetRowStore(Generic[T]):
         return DeleteStmt(self._sheet_session, self._mapper)
 
     def count(self) -> CountStmt:
-        return CountStmt(self._sheet_session)
+        return CountStmt(self._sheet_session, self._mapper)

@@ -6,7 +6,7 @@ class ModelA(models.Model):
     field_1 = models.StringField()
 
 
-def test_serialize():
+def test_serialize() -> None:
     serializer = ModelGoogleSheetSerializer(ModelA)
 
     # Do not serialize fields that are not set.
@@ -17,7 +17,7 @@ def test_serialize():
     assert serializer.serialize(obj) == {"A": 1}
 
 
-def test_deserialize():
+def test_deserialize() -> None:
     serializer = ModelGoogleSheetSerializer(ModelA)
 
     obj = serializer.deserialize({"A": 1})

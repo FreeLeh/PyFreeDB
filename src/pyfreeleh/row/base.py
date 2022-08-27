@@ -2,16 +2,22 @@ class Ordering:
     _field_name: str
     _value: str
 
+    @classmethod
+    def ASC(cls, field_name: str) -> "Ordering":
+        obj = cls()
+        obj._field_name = field_name
+        obj._value = "ASC"
+        return obj
 
-class OrderingAsc(Ordering):
-    _value = "ASC"
+    @classmethod
+    def DESC(cls, field_name: str) -> "Ordering":
+        obj = cls()
+        obj._field_name = field_name
+        obj._value = "DESC"
+        return obj
 
-    def __init__(self, field_name: str):
-        self._field_name = field_name
-
-
-class OrderingDesc(Ordering):
-    _value = "DESC"
-
-    def __init__(self, field_name: str):
-        self._field_name = field_name
+    def copy(self) -> "Ordering":
+        obj = Ordering()
+        obj._field_name = self._field_name
+        obj._value = self._value
+        return obj
