@@ -2,11 +2,11 @@ import dataclasses
 import json
 import os
 import time
+from typing import Iterator
 
 import pytest
 from googleapiclient.discovery import build
 
-from typing import Iterator
 from pyfreeleh.providers.google.auth import ServiceAccountGoogleAuthClient
 
 

@@ -12,7 +12,9 @@ target-version = ['py37', 'py38']
 include = '\.pyi?$'
 
 [tool.mypy]
+strict = true
 ignore_missing_imports = true
+disallow_subclassing_any = false
 
 [tool.pytest.ini_options]
 markers = [
