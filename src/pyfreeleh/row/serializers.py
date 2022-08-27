@@ -1,9 +1,9 @@
-from typing import Any, Dict, Generic, Type, TypeVar
-from pyfreeleh.row import models
 import abc
-from pyfreeleh.row.models import Model
-from pyfreeleh.providers.google.sheet.base import A1CellSelector
+from typing import Any, Dict, Generic, Type, TypeVar
 
+from pyfreeleh.providers.google.sheet.base import A1CellSelector
+from pyfreeleh.row import models
+from pyfreeleh.row.models import Model
 
 T = TypeVar("T")
 

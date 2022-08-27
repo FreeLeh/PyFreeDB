@@ -1,5 +1,3 @@
-import pytest
-
 from pyfreeleh.row import models
 
 
