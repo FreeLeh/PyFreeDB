@@ -180,3 +180,56 @@ class GoogleSheetWrapper:
             return cell["f"]
 
         raise ValueError("cell type {} is not supported".format(typ))
+
+
+class GoogleSheetSession:
+    def __init__(self, wrapper: GoogleSheetWrapper, spreadsheet_id: str, sheet_name: str) -> None:
+        self.spreadsheet_id = spreadsheet_id
+        self.sheet_name = sheet_name
+
+        self._wrapper = wrapper
+        self._ensure()
+
+    def _ensure(self):
+        try:
+            self._wrapper.create_sheet(self.spreadsheet_id, self._scratchpad_name)
+        except Exception:
+            pass
+
+    def insert_rows(self, a1_range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
+        return self._wrapper.insert_rows(self.spreadsheet_id, a1_range, values)
+
+    def overwrite_rows(self, a1_range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
+        return self._wrapper.overwrite_rows(self.spreadsheet_id, a1_range, values)
+
+    def clear(self, a1_ranges: List[A1Range]) -> None:
+        return self._wrapper.clear(self.spreadsheet_id, a1_ranges)
+
+    def update_rows(self, a1_range: A1Range, values: List[List[Any]]) -> UpdateRowsResult:
+        return self._wrapper.update_rows(self.spreadsheet_id, a1_range, values)
+
+    def batch_update_rows(self, requests: List[BatchUpdateRowsRequest]) -> List[UpdateRowsResult]:
+        return self._wrapper.batch_update_rows(self.spreadsheet_id, requests)
+
+    def query(self, query: str, has_header: bool = True) -> List[Dict[str, str]]:
+        return self._wrapper.query(self.spreadsheet_id, self.sheet_name, query, has_header)
+
+
+class GoogleSheetScratchpad:
+    SCRATCHPAD_BOOKED_VALUE = "BOOKED"
+
+    def __init__(self, session: GoogleSheetSession) -> None:
+        self._session = session
+        self._scratchpad_cell = self._book_scratchpad_cell()
+
+    def _book_scratchpad_cell(self) -> A1Range:
+        a1_range = A1Range.from_notation(self._session.sheet_name)
+        result = self._session.overwrite_rows(a1_range, [[self.SCRATCHPAD_BOOKED_VALUE]])
+        self._scratchpad_cell = result.updated_range
+
+    def execute(self, formula: str) -> Any:
+        result = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
+        return result.updated_values[0][0]
+
+    def close(self):
+        self._wrapper.clear(self._spreadsheet_id, [self._scratchpad_cell])

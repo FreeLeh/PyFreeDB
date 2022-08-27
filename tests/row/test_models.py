@@ -11,10 +11,15 @@ class A(models.Model):
 
 
 class B(A):
-    pass
+    another_field = models.StringField()
 
 
 def test_model():
+    # Parent's field should come first.
+    obj = B()
+    b_fields = list(obj._fields.keys())
+    assert b_fields == ["rid", "integer_field", "float_field", "string_field", "bool_field", "another_field"]
+
     # Can instantiate using __init__.
     obj = A(integer_field=1, float_field=1.0, string_field="abcd", bool_field=False)
     assert obj.integer_field == 1
@@ -24,11 +29,7 @@ def test_model():
 
     obj = A()
     # Accesing field that is not initialised will raise an exception.
-    try:
-        _ = obj.bool_field
-        pytest.fail("should raise exception")
-    except Exception:
-        pass
+    assert obj.bool_field is models.NotSet
 
     # But accessing field that has value = None will not raise an exception.
     obj.bool_field = None
@@ -44,3 +45,7 @@ def test_model():
 
     b = B()
     assert a1 != b
+
+    # object that is not created by store should have _rid = NotSet
+    a = A()
+    assert a.rid is models.NotSet

@@ -1,6 +1,9 @@
+from ast import Mod
 import dataclasses
 import inspect
-from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union, cast
+from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union, cast
+
+from pyfreeleh.providers.google.sheet.base import A1CellSelector
 
 
 # To differentiate between fields that are not set and Null
@@ -13,20 +16,17 @@ T = TypeVar("T")
 
 class Field(Generic[T]):
     _typ: Type[T]
-    _title: Optional[str]
+    _column_name: Optional[str]
+    _field_name: str
 
-    def __init__(self, title: Optional[str] = None) -> None:
-        self._title = title
+    def __init__(self, column_name: Optional[str] = None) -> None:
+        self._column_name = column_name
 
     def __set_name__(self, _: Any, name: str) -> None:
         self._field_name = name
 
-    def __get__(self, obj: Any, cls: Any) -> Optional[T]:
+    def __get__(self, obj: Any, _: Any) -> Optional[T]:
         value = getattr(obj._data, self._field_name)
-        if value is NotSet:
-            # TODO(fata.nugraha): create a proper Exception for this
-            raise Exception("key not set")
-
         return cast(Optional[T], value)
 
     def __set__(self, obj: Any, value: Optional[T]) -> None:
@@ -49,21 +49,44 @@ class StringField(Field[str]):
     _typ = str
 
 
+class PrimaryKeyField(IntegerField):
+    pass
+
+
 class meta(type):
     def __new__(cls, name: str, bases: Any, dct: Any) -> "meta":
         new_cls = super().__new__(cls, name, bases, dct)
-        # TODO(fata.nugarha): disallow field with name = _rid.
 
-        fields = []
-        for field, value in dct.items():
-            if isinstance(value, Field):
-                fields.append((field, value))
+        # In python3.7 dict ordering is guaranteed based on the insert time.
+        fields = {}
+        for base in bases:
+            try:
+                fields.update(base._fields)
+            except AttributeError:
+                pass
+
+        for field_name, value in dct.items():
+            if not isinstance(value, Field):
+                continue
+
+            if isinstance(value, PrimaryKeyField) ^ (field_name == "rid"):
+                raise Exception("can only have 1 PrimaryKeyField and the name must be _rid")
+
+            fields[field_name] = value
+
         setattr(new_cls, "_fields", fields)
 
+        # Internally, we will store the actual data in a dataclass so that we don't need to deal with the
+        # how to store the data.
         dataclasses_fields = []
-        for (field_name, field) in fields:
-            field_type = cast(type, Union[field._typ, None, NotSet])
-            dataclasses_fields.append((field_name, field_type, dataclasses.field(default=NotSet)))
+        for (field_name, field) in fields.items():
+            if field_name == "rid":
+                field_type = Union[field._typ, None, NotSet]
+            else:
+                field_type = Union[field._typ, NotSet]
+
+            value = dataclasses.field(default=NotSet)
+            dataclasses_fields.append((field_name, cast(type, field_type), value))
         data_klass = dataclasses.make_dataclass(name, dataclasses_fields)
 
         # TODO(fata.nugraha): figure out how to make the __init__ annotation is the same as dataclasses' __init__
@@ -86,8 +109,10 @@ class meta(type):
 
 
 class Model(metaclass=meta):
-    _fields: List[Tuple[str, Any]]
+    _fields: Dict[str, Field]
     _data: Any
+
+    rid = PrimaryKeyField(column_name="_rid")
 
     def asdict(self) -> Dict[str, Any]:
         d = dataclasses.asdict(self._data)
