@@ -8,10 +8,6 @@ from pyfreeleh.row.serializers import FieldColumnMapper, ModelGoogleSheetSeriali
 from pyfreeleh.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
 
 
-class InvalidQuery(Exception):
-    pass
-
-
 T = TypeVar("T", bound=Model)
 
 
