@@ -70,7 +70,7 @@ class meta(type):
                 continue
 
             if isinstance(value, PrimaryKeyField) ^ (field_name == "rid"):
-                raise Exception("can only have 1 PrimaryKeyField and the name must be _rid")
+                raise Exception("can only have 1 PrimaryKeyField and the name must be rid")
 
             fields[field_name] = value
 

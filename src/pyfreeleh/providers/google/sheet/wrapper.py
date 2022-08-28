@@ -13,6 +13,8 @@ class GoogleSheetWrapper:
     APPEND_MODE_OVERWRITE = "OVERWRITE"
     APPEND_MODE_INSERT = "INSERT_ROWS"
     MAJOR_DIMENSION_ROWS = "ROWS"
+    VALUE_RENDER_FORMATTED_VALUE = "FORMATTED_VALUE"
+    VALUE_INPUT_USER_ENTERED = "USER_ENTERED"
 
     def __init__(self, auth_client: GoogleAuthClient):
         service = build("sheets", "v4", credentials=auth_client.credentials())
@@ -50,8 +52,8 @@ class GoogleSheetWrapper:
                 range=str(a1_range),
                 insertDataOption=mode,
                 includeValuesInResponse="true",
-                responseValueRenderOption="FORMATTED_VALUE",
-                valueInputOption="USER_ENTERED",
+                responseValueRenderOption=self.VALUE_RENDER_FORMATTED_VALUE,
+                valueInputOption=self.VALUE_INPUT_USER_ENTERED,
                 body={"values": values},
             )
             .execute()
