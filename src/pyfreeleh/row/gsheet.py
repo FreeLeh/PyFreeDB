@@ -382,7 +382,7 @@ class GoogleSheetRowStore(Generic[T]):
     def select(self, *columns: str) -> SelectStmt[T]:
         """Create the select statement that will fetch the selected columns from the sheet.
 
-        If the pasesed in `columns` is empty, all columns will be returned.
+        If the passed in `columns` is empty, all columns will be returned.
 
         Args:
             *columns: list of columns that we want to get.
