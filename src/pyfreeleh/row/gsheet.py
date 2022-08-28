@@ -347,7 +347,7 @@ class GoogleSheetRowStore(Generic[T]):
         sheet_name: str,
         object_klass: Type[T],
     ):
-        """Initialises the store to operate on the given `sheet_name` inside the given `spreadsheet_id`.
+        """Initialise the row store that operates on the given `sheet_name` inside the given `spreadsheet_id`.
 
         During initialisation, the store will create the sheet if `sheet_name` doesn't exists inside the spreadsheet
         and will update the first row to be the column headers.

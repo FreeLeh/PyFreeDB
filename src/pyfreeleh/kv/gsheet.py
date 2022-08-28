@@ -25,6 +25,18 @@ class GoogleSheetKVStore(KVStore):
         codec: Codec = BasicCodec(),
         mode: int = DEFAULT_MODE,
     ):
+        """Initialise the KV store that operates on the given `sheet_name` inside the given `spreadsheet_id`.
+
+        During initialisation, the store will create the sheet if `sheet_name` doesn't exists inside the spreadsheet.
+
+        Args:
+            auth_client: the credential that we're going to use to call the Google Sheet APIs.
+            spreadsheet_id: the spreadsheet id that we're going to operate on.
+            sheet_name: the sheet name that we're going to operate on.
+            codec: the codec that will be used to serialize/deserialize the value.
+            mode: the KV storage strategy.
+        """
+
         self._auth_client = auth_client
         self._spreadsheet_id = spreadsheet_id
         self._scratchpad_name = sheet_name + self.SCRATCHPAD_SUFFIX
@@ -58,6 +70,16 @@ class GoogleSheetKVStore(KVStore):
         self._scratchpad_cell = result.updated_range
 
     def get(self, key: str) -> bytes:
+        """Returns the value associated with the given `key`.
+
+        Args:
+            key: the key of the item that we want to get.
+
+        Returns:
+            bytes: the value associated by the given key.
+
+            Will raise KeyNotFoundError if the key doesn't exists.
+        """
         self._ensure_initialised()
 
         formula = self._get_formula(key)
@@ -78,6 +100,12 @@ class GoogleSheetKVStore(KVStore):
         assert False, "unrecognised mode"
 
     def set(self, key: str, value: bytes) -> None:
+        """Set the value of entry associated with the given `key` with the given`value`.
+
+        Args:
+            key: the key of the entry that we want to set.
+            value: the value that we want to store.
+        """
         self._ensure_initialised()
 
         strategy = self._get_set_strategy()
@@ -125,6 +153,11 @@ class GoogleSheetKVStore(KVStore):
         return value
 
     def delete(self, key: str) -> None:
+        """Delete the entry associated with the given `key`.
+
+        Args:
+            key: the key of the entry that we want to delete.
+        """
         self._ensure_initialised()
 
         if self._mode == self.DEFAULT_MODE:
@@ -146,6 +179,10 @@ class GoogleSheetKVStore(KVStore):
         self._append_only_set(key, "", ts)
 
     def close(self) -> None:
+        """Clean up the resources held by the current instance.
+
+        It's recommended to call this method once you're done with it.
+        """
         self._ensure_initialised()
 
         self._wrapper.clear(self._spreadsheet_id, [self._scratchpad_cell])
