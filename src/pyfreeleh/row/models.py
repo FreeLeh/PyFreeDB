@@ -16,8 +16,8 @@ class Field(Generic[T]):
     _header_name: Optional[str]
     _field_name: str
 
-    def __init__(self, column_name: Optional[str] = None) -> None:
-        self._header_name = column_name
+    def __init__(self, header_name: Optional[str] = None) -> None:
+        self._header_name = header_name
 
     def __set_name__(self, _: Any, name: str) -> None:
         self._field_name = name
@@ -76,7 +76,7 @@ class meta(type):
 
         setattr(new_cls, "_fields", fields)
 
-        # Internally, we will store the actual data in a dataclass so that we don't need to deal with the
+        # Internally, we will store the actual data in a dataclass so that we don't need to deal with the details of
         # how to store the data.
         dataclasses_fields = []
         for (field_name, field) in fields.items():
@@ -89,7 +89,7 @@ class meta(type):
 
         data_klass = dataclasses.make_dataclass(name, dataclasses_fields)
 
-        # TODO(fata.nugraha): figure out how to make the __init__ annotation is the same as dataclasses' __init__
+        # Ideally we should make make the __init__ annotation is the same as dataclasses' __init__
         # annotation to improve the developer experience.
         def init(self: Any, *args: Any, **kwargs: Any) -> None:
             self._data = data_klass(*args, **kwargs)
@@ -111,4 +111,4 @@ class meta(type):
 class Model(metaclass=meta):
     _fields: Dict[str, Union[IntegerField, FloatField, BoolField, StringField]]
 
-    rid = PrimaryKeyField(column_name="_rid")
+    rid = PrimaryKeyField(header_name="_rid")

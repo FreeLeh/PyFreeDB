@@ -49,7 +49,7 @@ class CountStmt:
 
         The given `condition` will be used as the WHERE clause on the final query. You can use `"?"` placeholder
         inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
-        based on their appearance ordering.
+        based on their appearance order.
 
         Args:
             condition: conditions of the data that we're going to get.
