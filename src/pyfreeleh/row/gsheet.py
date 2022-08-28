@@ -7,7 +7,6 @@ from pyfreeleh.row.models import Model, PrimaryKeyField
 from pyfreeleh.row.serializers import FieldColumnMapper, ModelGoogleSheetSerializer
 from pyfreeleh.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
 
-
 T = TypeVar("T", bound=Model)
 
 
