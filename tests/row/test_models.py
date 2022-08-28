@@ -1,3 +1,4 @@
+from typing import Type, List
 from pyfreeleh.row import models
 
 
@@ -47,3 +48,14 @@ def test_model() -> None:
     # object that is not created by store should have _rid = NotSet
     a = A()
     assert a.rid is models.NotSet
+
+    # rid must be the first field.
+    class ReorderedPK(models.Model):
+        a = models.IntegerField()
+        rid = models.PrimaryKeyField()
+
+    assert get_model_fields(ReorderedPK) == ["rid", "a"]
+
+
+def get_model_fields(klass: Type[models.Model]) -> List[str]:
+    return list(klass._fields.keys())

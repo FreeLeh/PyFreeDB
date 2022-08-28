@@ -69,11 +69,31 @@ class meta(type):
             if not isinstance(value, Field):
                 continue
 
-            if isinstance(value, PrimaryKeyField) ^ (field_name == "rid"):
-                raise Exception("can only have 1 PrimaryKeyField and the name must be rid")
-
             fields[field_name] = value
 
+        # We want to make sure PK is the first field in _fields to ensure it's the first column in the sheet (lot of
+        # things depends on this assumption).
+        pk = None
+        for field_name, field in fields.items():
+            if not isinstance(field, PrimaryKeyField):
+                continue
+
+            if field._field_name != "rid":
+                raise Exception("PrimaryKey field must have rid as its field name")
+
+            pk = field
+            break
+
+        if not pk:
+            raise Exception("Model must have at least 1 PrimaryKey")
+        else:
+            fields.pop(pk._field_name)
+
+        sorted_fields = {pk._field_name: pk}
+        for field_name, field in fields.items():
+            sorted_fields[field_name] = field
+
+        fields = sorted_fields
         setattr(new_cls, "_fields", fields)
 
         # Internally, we will store the actual data in a dataclass so that we don't need to deal with the details of
