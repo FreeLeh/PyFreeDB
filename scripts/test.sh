@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-pytest . -v -m "not integration"
+coverage run -m pytest . -v -m "not integration"

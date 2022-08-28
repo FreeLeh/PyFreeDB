@@ -228,7 +228,7 @@ class GoogleSheetRowStore(Generic[T]):
     def _ensure_headers(self) -> None:
         column_headers = []
         for field in self._object_klass._fields.values():
-            column_headers.append(field._column_name)
+            column_headers.append(field._header_name)
 
         self._sheet_session.update_rows(A1Range(self._sheet_name), [column_headers])
 
