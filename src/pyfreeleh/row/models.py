@@ -107,12 +107,12 @@ class meta(type):
             else:
                 dataclasses_fields.append((field_name, cast(type, Union[field._typ, NotSet]), value))
 
-        data_klass = dataclasses.make_dataclass(name, dataclasses_fields)
+        data_cls = dataclasses.make_dataclass(name, dataclasses_fields)
 
         # Ideally we should make make the __init__ annotation is the same as dataclasses' __init__
         # annotation to improve the developer experience.
         def init(self: Any, *args: Any, **kwargs: Any) -> None:
-            self._data = data_klass(*args, **kwargs)
+            self._data = data_cls(*args, **kwargs)
 
         def repr(self: Any) -> str:
             return str(self._data)
@@ -124,7 +124,7 @@ class meta(type):
         setattr(new_cls, "__repr__", repr)
         setattr(new_cls, "__eq__", eq)
 
-        new_cls.__doc__ = data_klass.__name__ + str(inspect.signature(data_klass)).replace(" -> None", "")
+        new_cls.__doc__ = data_cls.__name__ + str(inspect.signature(data_cls)).replace(" -> None", "")
         return new_cls
 
 

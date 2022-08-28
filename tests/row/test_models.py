@@ -58,5 +58,5 @@ def test_model() -> None:
     assert get_model_fields(ReorderedPK) == ["rid", "a"]
 
 
-def get_model_fields(klass: Type[models.Model]) -> List[str]:
-    return list(klass._fields.keys())
+def get_model_fields(cls: Type[models.Model]) -> List[str]:
+    return list(cls._fields.keys())

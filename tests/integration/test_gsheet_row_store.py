@@ -17,7 +17,7 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
         sheet_name="row_store",
-        object_klass=Customer,
+        object_cls=Customer,
     )
 
     # Sheet is empty, expects empty list.

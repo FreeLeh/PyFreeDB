@@ -345,7 +345,7 @@ class GoogleSheetRowStore(Generic[T]):
         auth_client: GoogleAuthClient,
         spreadsheet_id: str,
         sheet_name: str,
-        object_klass: Type[T],
+        object_cls: Type[T],
     ):
         """Initialise the row store that operates on the given `sheet_name` inside the given `spreadsheet_id`.
 
@@ -356,25 +356,25 @@ class GoogleSheetRowStore(Generic[T]):
             auth_client: the credential that we're going to use to call the Google Sheet APIs.
             spreadsheet_id: the spreadsheet id that we're going to operate on.
             sheet_name: the sheet name that we're going to operate on.
-            object_klass: the row model definition that represents how the data inside the sheet looks like.
+            object_cls: the row model definition that represents how the data inside the sheet looks like.
         """
-        if not issubclass(object_klass, Model):
-            raise TypeError("object_klass must subclass Model.")
+        if not issubclass(object_cls, Model):
+            raise TypeError("object_cls must subclass Model.")
 
         self._sheet_name = sheet_name
-        self._object_klass = object_klass
+        self._object_cls = object_cls
 
         wrapper = GoogleSheetWrapper(auth_client)
         self._sheet_session = GoogleSheetSession(wrapper, spreadsheet_id, sheet_name)
         self._ensure_headers()
 
-        self._columns = list(object_klass._fields.keys())
-        self._serializer = ModelGoogleSheetSerializer(object_klass)
-        self._mapper = FieldColumnMapper(object_klass)
+        self._columns = list(object_cls._fields.keys())
+        self._serializer = ModelGoogleSheetSerializer(object_cls)
+        self._mapper = FieldColumnMapper(object_cls)
 
     def _ensure_headers(self) -> None:
         column_headers = []
-        for field in self._object_klass._fields.values():
+        for field in self._object_cls._fields.values():
             column_headers.append(field._header_name)
 
         self._sheet_session.update_rows(A1Range(self._sheet_name), [column_headers])
@@ -452,7 +452,7 @@ class GoogleSheetRowStore(Generic[T]):
         return CountStmt(self._sheet_session, self._mapper)
 
     def _get_pk_field_name(self) -> str:
-        for field in self._object_klass._fields.values():
+        for field in self._object_cls._fields.values():
             if isinstance(field, PrimaryKeyField):
                 return field._field_name
 
