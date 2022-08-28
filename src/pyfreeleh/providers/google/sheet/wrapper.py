@@ -130,8 +130,6 @@ class GoogleSheetWrapper:
         auth_token = "Bearer " + self._auth_client.credentials().token
         headers = {"contentType": "application/json", "Authorization": auth_token}
 
-        print(query)
-
         params: Dict[str, Union[str, int]] = {
             "sheet": sheet_name,
             "tqx": "responseHandler:freeleh",
@@ -142,7 +140,6 @@ class GoogleSheetWrapper:
         url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
         r = requests.get(url=url, params=params, headers=headers)
         r.raise_for_status()
-        print(r.text)
         return self._convert_query_result(r.text)
 
     def _convert_query_result(self, response: str) -> List[Dict[str, Any]]:
@@ -180,12 +177,11 @@ class GoogleSheetWrapper:
 
                 return int(cell["f"])
 
-            # computed data doesn't have raw value.
+            # Computed data doesn't have raw value, number returned from aggregation will doesn't have `f`.
             return int(cell["v"])
         elif typ == "string":
             return cell["v"]
         elif typ in ["date", "datetime", "timeofday"]:
-            # return datetime.strptime(cell["f"], col["pattern"])
             return cell["f"]
 
         raise ValueError("cell type {} is not supported".format(typ))

@@ -205,8 +205,6 @@ class InsertStmt(Generic[T]):
         raw_values = self._get_raw_values()
         result = self._sheet_session.overwrite_rows(A1Range.from_notation(self._sheet_session.sheet_name), raw_values)
 
-        # TODO(fata.nugraha): think about how to set rid back.
-        # we should not assume rid is the primary key.
         for idx, row in enumerate(result.inserted_values):
             self._rows[idx].rid = int(row[0])
 
@@ -215,7 +213,10 @@ class InsertStmt(Generic[T]):
 
         for row in self._rows:
             serialized = self._serializer.serialize(row)
-            # TODO(fata.nugraha): assumption A is the pk
+
+            # We don't want user to set the value of PK.
+            # Note that we can't do serialized["A"] = "=ROW()" because if serialized doesn't contain "A" it will be
+            # put in the back when we call serialized.values().
             serialized.pop("A", None)
             raw_values.append(["=ROW()"] + list(serialized.values()))
 
@@ -265,7 +266,7 @@ class UpdateStmt:
         Returns:
             int: the number of updated rows.
         """
-        # TODO(fata.nugraha): assumption pk is in the first cell
+        # ASSUMPTION: PK is in the first cell.
         affected_rows = self._sheet_session.query(self._query.build_select(["A"]))
         update_candidate_indices = [int(row["A"]) for row in affected_rows]
 
@@ -324,7 +325,7 @@ class DeleteStmt:
         Returns:
             int: number of rows deleted.
         """
-        # TODO(fata.nugraha): assumption pk is in the first cell
+        # ASSUMPTION: PK is in the first cell.
         affected_rows = self._sheet_session.query(self._query.build_select(["A"]))
         update_candidate_indices = [int(row["A"]) for row in affected_rows]
 

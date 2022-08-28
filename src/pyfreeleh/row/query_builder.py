@@ -24,8 +24,7 @@ class GoogleSheetQueryBuilder:
             raise InvalidQuery("number of placeholder and argument is not equal")
 
     def _build_where(self) -> str:
-        # Assumption, the first field is always the PK field.
-        # TODO(fata.nugraha): update the model to reflect this.
+        # ASSUMPTION: the first field (A) is always the PK field.
         query = "WHERE A IS NOT NULL"
 
         where = self._where
@@ -41,7 +40,6 @@ class GoogleSheetQueryBuilder:
         parts[1::2] = map(self._convert_arg, list(args))
         return "".join(map(str, parts))
 
-    # TODO(fata.nugraha): is this necessary? can't recall what is this.
     def _convert_arg(self, arg: Any) -> Any:
         if isinstance(arg, str):
             return '"{}"'.format(arg)
