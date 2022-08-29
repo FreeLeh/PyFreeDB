@@ -11,11 +11,12 @@ class InvalidQuery(Exception):
 
 
 class ColumnReplacer:
-    def __init__(self, model: Type[Model]):
+    def __init__(self, rid_column_name: str, model: Type[Model]):
+        self._rid_column_name = rid_column_name
         self._replace_map = self._get_col_name_mapping(model)
 
     def _get_col_name_mapping(self, model: Type[Model]) -> Dict[str, str]:
-        result = {"_rid": "A"}
+        result = {self._rid_column_name: "A"}
         for idx, field in enumerate(model._fields.values()):
             result[field._field_name] = str(A1CellSelector.from_rc(column=idx + 2))
         return result

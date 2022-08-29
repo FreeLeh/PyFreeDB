@@ -4,7 +4,7 @@ from pyfreedb.providers.google.auth.base import GoogleAuthClient
 from pyfreedb.providers.google.sheet.base import A1Range
 from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
 from pyfreedb.row.models import Model
-from pyfreedb.row.query_builder import ColumnReplacer
+from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
 from pyfreedb.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
 
 T = TypeVar("T", bound=Model)
@@ -12,6 +12,7 @@ T = TypeVar("T", bound=Model)
 
 class GoogleSheetRowStore(Generic[T]):
     RID_COLUMN_NAME = "_rid"
+    WHERE_DEFAULT_CLAUSE = f"{RID_COLUMN_NAME} IS NOT NULL"
 
     def __init__(
         self,
@@ -42,7 +43,7 @@ class GoogleSheetRowStore(Generic[T]):
         self._sheet_name = sheet_name
         self._ensure_sheet()
 
-        self._replacer = ColumnReplacer(object_cls)
+        self._replacer = ColumnReplacer(self.RID_COLUMN_NAME, object_cls)
         self._columns = list(object_cls._fields.keys())
 
     def _ensure_sheet(self) -> None:
@@ -127,3 +128,6 @@ class GoogleSheetRowStore(Generic[T]):
             10
         """
         return CountStmt(self)
+
+    def _new_query_builder(self) -> GoogleSheetQueryBuilder:
+        return GoogleSheetQueryBuilder(self._replacer).where(self.WHERE_DEFAULT_CLAUSE)

@@ -15,7 +15,7 @@ T = TypeVar("T", bound=Model)
 class CountStmt:
     def __init__(self, store: "GoogleSheetRowStore"):
         self._store = store
-        self._query = GoogleSheetQueryBuilder(store._replacer)
+        self._query = store._new_query_builder()
 
     def where(self, condition: str, *args: Any) -> "CountStmt":
         """Filter the rows that we're going to count.
@@ -37,7 +37,7 @@ class CountStmt:
             >> store.count().where("age > ?", 10).execute()
             10
         """
-        self._query.where(condition, *args)
+        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def execute(self) -> int:
@@ -46,7 +46,7 @@ class CountStmt:
         Returns:
             int: number of rows that matched with the given condition.
         """
-        query = self._query.build_select(["COUNT(_rid)"])
+        query = self._query.build_select([f"COUNT({self._store.RID_COLUMN_NAME})"])
         rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
         return int(rows[0][0])
 
@@ -55,7 +55,7 @@ class SelectStmt(Generic[T]):
     def __init__(self, store: "GoogleSheetRowStore", selected_columns: List[str]):
         self._store = store
         self._selected_columns = selected_columns
-        self._query = GoogleSheetQueryBuilder(store._replacer)
+        self._query = store._new_query_builder()
 
     def where(self, condition: str, *args: Any) -> "SelectStmt[T]":
         """Filter the rows that we're going to get.
@@ -77,7 +77,7 @@ class SelectStmt(Generic[T]):
             >> len(store.select().where("age > ?", 10).execute())
             10
         """
-        self._query.where(condition, *args)
+        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def limit(self, limit: int) -> "SelectStmt[T]":
@@ -179,7 +179,7 @@ class UpdateStmt:
     def __init__(self, store: "GoogleSheetRowStore", update_values: Dict[str, str]):
         self._store = store
         self._update_values = update_values
-        self._query = GoogleSheetQueryBuilder(store._replacer)
+        self._query = store._new_query_builder()
 
     def where(self, condition: str, *args: Any) -> "UpdateStmt":
         """Filter the rows that we're going to update.
@@ -201,7 +201,7 @@ class UpdateStmt:
             >> store.update({"name": "cat"}).where("age > ?", 10).execute()
             10
         """
-        self._query.where(condition, *args)
+        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def execute(self) -> int:
@@ -210,7 +210,7 @@ class UpdateStmt:
         Returns:
             int: the number of updated rows.
         """
-        query = self._query.build_select(["_rid"])
+        query = self._query.build_select([self._store.RID_COLUMN_NAME])
         affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
         update_candidate_indices = [int(row[0]) for row in affected_rows]
 
@@ -235,7 +235,7 @@ class UpdateStmt:
 class DeleteStmt:
     def __init__(self, store: "GoogleSheetRowStore"):
         self._store = store
-        self._query = GoogleSheetQueryBuilder(store._replacer)
+        self._query = store._new_query_builder()
 
     def where(self, condition: str, *args: Any) -> "DeleteStmt":
         """Filter the rows that we're going to delete.
@@ -257,7 +257,7 @@ class DeleteStmt:
             >> store.delete().where("age > ?", 10).execute()
             10
         """
-        self._query.where(condition, *args)
+        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def execute(self) -> int:
@@ -266,7 +266,7 @@ class DeleteStmt:
         Returns:
             int: number of rows deleted.
         """
-        query = self._query.build_select(["_rid"])
+        query = self._query.build_select([self._store.RID_COLUMN_NAME])
         affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
         affected_row_indices = [int(row[0]) for row in affected_rows]
 
