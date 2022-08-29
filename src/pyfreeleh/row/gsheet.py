@@ -3,8 +3,8 @@ from typing import Any, Dict, Generic, List, Type, TypeVar
 from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 from pyfreeleh.providers.google.sheet.base import A1Range
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
-from pyfreeleh.row.models import Model, PrimaryKeyField
-from pyfreeleh.row.serializers import FieldColumnMapper, ModelGoogleSheetSerializer
+from pyfreeleh.row.models import Model
+from pyfreeleh.row.query_builder import ColumnReplacer
 from pyfreeleh.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
 
 T = TypeVar("T", bound=Model)
@@ -40,9 +40,8 @@ class GoogleSheetRowStore(Generic[T]):
         self._sheet_name = sheet_name
         self._ensure_sheet()
 
+        self._replacer = ColumnReplacer(object_cls)
         self._columns = list(object_cls._fields.keys())
-        self._serializer = ModelGoogleSheetSerializer(object_cls)
-        self._mapper = FieldColumnMapper(object_cls)
 
     def _ensure_sheet(self) -> None:
         try:
@@ -50,7 +49,7 @@ class GoogleSheetRowStore(Generic[T]):
         except Exception:
             pass
 
-        column_headers = []
+        column_headers = ["_rid"]
         for field in self._object_cls._fields.values():
             column_headers.append(field._header_name)
 
@@ -75,8 +74,8 @@ class GoogleSheetRowStore(Generic[T]):
             self._spreadsheet_id,
             self._sheet_name,
             self._wrapper,
-            self._serializer,
-            self._mapper,
+            self._object_cls,
+            self._replacer,
             selected_columns,
         )
 
@@ -89,7 +88,7 @@ class GoogleSheetRowStore(Generic[T]):
         Returns:
             InsertStmt: the insert statement that is configured to insert the given rows.
         """
-        return InsertStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._serializer, rows)
+        return InsertStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, rows)
 
     def update(self, update_value: Dict[str, Any]) -> UpdateStmt:
         """Create the update statement to update rows on the sheet with the given value.
@@ -106,12 +105,14 @@ class GoogleSheetRowStore(Generic[T]):
             >> store.update({"name": "cat"}).execute()
             10
         """
-        update_value = update_value.copy()
-
-        pk_col_name = self._get_pk_field_name()
-        update_value.pop(pk_col_name, None)
-
-        return UpdateStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._mapper, update_value)
+        return UpdateStmt(
+            self._spreadsheet_id,
+            self._sheet_name,
+            self._wrapper,
+            self._replacer,
+            self._object_cls,
+            update_value,
+        )
 
     def delete(self) -> DeleteStmt:
         """Create a delete statement to delete the affected rows.
@@ -119,7 +120,7 @@ class GoogleSheetRowStore(Generic[T]):
         Returns:
             DeleteStmt: a delete statement.
         """
-        return DeleteStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._mapper)
+        return DeleteStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._replacer)
 
     def count(self) -> CountStmt:
         """Create a count statement to count how many rows are there in the sheet.
@@ -133,11 +134,4 @@ class GoogleSheetRowStore(Generic[T]):
             >> store.count().where("name = ?", "cat").execute()
             10
         """
-        return CountStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._mapper)
-
-    def _get_pk_field_name(self) -> str:
-        for field in self._object_cls._fields.values():
-            if isinstance(field, PrimaryKeyField):
-                return field._field_name
-
-        raise Exception("model must have exactly one PrimaryKeyField")
+        return CountStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._replacer)

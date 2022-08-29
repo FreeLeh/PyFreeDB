@@ -1,18 +1,40 @@
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
+
+from pyfreeleh.providers.google.sheet.base import A1CellSelector
 
 from .base import Ordering
+from .models import Model
 
 
 class InvalidQuery(Exception):
     pass
 
 
+class ColumnReplacer:
+    def __init__(self, model: Type[Model]):
+        self._replace_map = self._get_col_name_mapping(model)
+
+    def _get_col_name_mapping(self, model) -> Dict[str, str]:
+        result = {}
+        for idx, field in enumerate(model._fields.values()):
+            result[field._field_name] = str(A1CellSelector.from_rc(column=idx + 2))
+        print(result)
+        return result
+
+    def replace(self, value: str) -> str:
+        for repl_from, repl_to in self._replace_map.items():
+            value = value.replace(repl_from, repl_to)
+
+        return value
+
+
 class GoogleSheetQueryBuilder:
-    def __init__(self) -> None:
+    def __init__(self, replacer: ColumnReplacer) -> None:
         self._where: Optional[Tuple[str, Tuple[Any, ...]]] = None
         self._orderings: List[Ordering] = []
         self._limit: int = 0
         self._offset: int = 0
+        self._replacer = replacer
 
     def where(self, condition: str, *args: Any) -> "GoogleSheetQueryBuilder":
         self._validate_where(condition, args)
@@ -24,15 +46,13 @@ class GoogleSheetQueryBuilder:
             raise InvalidQuery("number of placeholder and argument is not equal")
 
     def _build_where(self) -> str:
-        # ASSUMPTION: the first field (A) is always the PK field.
-        query = "WHERE A IS NOT NULL"
-
         where = self._where
         if not where:
-            return query
+            return ""
 
         stmt, args = where
-        query = query + " AND " + stmt
+        stmt = self._replacer.replace(stmt)
+        query = "WHERE " + stmt
 
         query_parts = query.split("?")
         parts = query_parts + list(args)
@@ -58,7 +78,7 @@ class GoogleSheetQueryBuilder:
 
         parts = []
         for order in self._orderings:
-            parts.append(order._field_name + " " + order._value)
+            parts.append(self._replacer.replace(order._field_name) + " " + order._value)
 
         return "ORDER BY " + ", ".join(parts)
 
@@ -93,7 +113,7 @@ class GoogleSheetQueryBuilder:
         return "OFFSET {}".format(self._offset)
 
     def build_select(self, columns: List[str]) -> str:
-        parts = ["SELECT " + ",".join(columns)]
+        parts = ["SELECT " + ",".join(map(self._replacer.replace, columns))]
         parts.append(self._build_where())
         parts.append(self._build_order_by())
         parts.append(self._build_limit())

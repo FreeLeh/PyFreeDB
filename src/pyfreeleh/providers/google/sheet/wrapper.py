@@ -126,7 +126,7 @@ class GoogleSheetWrapper:
 
         return results
 
-    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[Dict[str, Any]]:
+    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[List[Any]]:
         auth_token = "Bearer " + self._auth_client.credentials().token
         headers = {"contentType": "application/json", "Authorization": auth_token}
 
@@ -137,12 +137,14 @@ class GoogleSheetWrapper:
             "headers": 1 if has_header else 0,
         }
 
+        print(query)
         url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
         r = requests.get(url=url, params=params, headers=headers)
         r.raise_for_status()
+        print(r.text)
         return self._convert_query_result(r.text)
 
-    def _convert_query_result(self, response: str) -> List[Dict[str, Any]]:
+    def _convert_query_result(self, response: str) -> List[List[Any]]:
         # Remove the schema header -> freeleh({...}).
         # We only care about the JSON inside of the bracket.
         start, end = response.index("{"), response.rindex("}")
@@ -152,13 +154,13 @@ class GoogleSheetWrapper:
 
         results = []
         for row in rows:
-            result_row = {}
+            result_row = []
             for cell_idx, cell in enumerate(row["c"]):
                 if not cell:
                     continue
 
                 col = cols[cell_idx]
-                result_row[col["id"]] = self._parse_cell(cell, col)
+                result_row.append(self._parse_cell(cell, col))
             results.append(result_row)
         return results
 

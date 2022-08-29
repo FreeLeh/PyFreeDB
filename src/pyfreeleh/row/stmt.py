@@ -1,46 +1,21 @@
-from typing import Any, Dict, Generic, List, TypeVar
+from typing import Any, Dict, Generic, List, Type, TypeVar
 
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
 from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 from pyfreeleh.row.base import Ordering
 from pyfreeleh.row.models import Model
-from pyfreeleh.row.query_builder import GoogleSheetQueryBuilder
-from pyfreeleh.row.serializers import FieldColumnMapper, Serializer
+from pyfreeleh.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
 
 T = TypeVar("T", bound=Model)
 
 
-def map_orderings(mapper: FieldColumnMapper, orderings: List[Ordering]) -> List[Ordering]:
-    mapped_orderings = []
-    for order in orderings:
-        col_name = mapper.to_column(order._field_name)
-        mapped_ordering = order.copy()
-        mapped_ordering._field_name = col_name
-        mapped_orderings.append(mapped_ordering)
-
-    return mapped_orderings
-
-
-def map_conditions(mapper: FieldColumnMapper, condition: str) -> str:
-    for column, field in mapper.field_by_col().items():
-        condition = condition.replace(field, column)
-    return condition
-
-
 class CountStmt:
-    def __init__(
-        self,
-        spreadsheet_id: str,
-        sheet_name: str,
-        wrapper: GoogleSheetWrapper,
-        mapper: FieldColumnMapper,
-    ):
+    def __init__(self, spreadsheet_id: str, sheet_name: str, wrapper: GoogleSheetWrapper, replacer: ColumnReplacer):
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
         self._wrapper = wrapper
-        self._mapper = mapper
 
-        self._query = GoogleSheetQueryBuilder()
+        self._query = GoogleSheetQueryBuilder(replacer)
 
     def where(self, condition: str, *args: Any) -> "CountStmt":
         """Filter the rows that we're going to count.
@@ -62,8 +37,7 @@ class CountStmt:
             >> store.count().where("age > ?", 10).execute()
             10
         """
-        mapped_conditions = map_conditions(self._mapper, condition)
-        self._query.where(mapped_conditions, *args)
+        self._query.where(condition, *args)
         return self
 
     def execute(self) -> int:
@@ -73,7 +47,7 @@ class CountStmt:
             int: number of rows that matched with the given condition.
         """
         rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["COUNT(A)"]))
-        return int(rows[0]["count-A"])
+        return int(rows[0][0])
 
 
 class SelectStmt(Generic[T]):
@@ -82,18 +56,17 @@ class SelectStmt(Generic[T]):
         spreadsheet_id: str,
         sheet_name: str,
         wrapper: GoogleSheetWrapper,
-        serializer: Serializer[T],
-        mapper: FieldColumnMapper,
+        object_cls: Type[T],
+        replacer: ColumnReplacer,
         selected_columns: List[str],
     ):
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
         self._wrapper = wrapper
-        self._serializer = serializer
-        self._mapper = mapper
+        self._object_cls = object_cls
         self._selected_columns = selected_columns
 
-        self._query = GoogleSheetQueryBuilder()
+        self._query = GoogleSheetQueryBuilder(replacer)
 
     def where(self, condition: str, *args: Any) -> "SelectStmt[T]":
         """Filter the rows that we're going to get.
@@ -115,8 +88,7 @@ class SelectStmt(Generic[T]):
             >> len(store.select().where("age > ?", 10).execute())
             10
         """
-        mapped_conditions = map_conditions(self._mapper, condition)
-        self._query.where(mapped_conditions, *args)
+        self._query.where(condition, *args)
         return self
 
     def limit(self, limit: int) -> "SelectStmt[T]":
@@ -152,8 +124,7 @@ class SelectStmt(Generic[T]):
         Returns:
             SelectStatement: select statement with the column ordering applied.
         """
-        mapped_orderings = map_orderings(self._mapper, list(orderings))
-        self._query.order_by(*mapped_orderings)
+        self._query.order_by(*orderings)
         return self
 
     def execute(self) -> List[T]:
@@ -162,18 +133,20 @@ class SelectStmt(Generic[T]):
         Returns:
             list: list of rows that matched the given condition.
         """
-        mapped_columns = []
-        for col in self._selected_columns:
-            mapped_columns.append(self._mapper.to_column(col))
-
-        if "A" not in mapped_columns:
-            mapped_columns.insert(0, "A")
-
-        rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(mapped_columns))
+        rows = self._wrapper.query(
+            self._spreadsheet_id,
+            self._sheet_name,
+            self._query.build_select(self._selected_columns),
+        )
 
         results = []
         for row in rows:
-            results.append(self._serializer.deserialize(row))
+            print(row)
+            raw = {}
+            for idx, col in enumerate(self._selected_columns):
+                raw[col] = row[idx]
+
+            results.append(self._object_cls(**raw))
 
         return results
 
@@ -184,16 +157,12 @@ class InsertStmt(Generic[T]):
         spreadsheet_id: str,
         sheet_name: str,
         wrapper: GoogleSheetWrapper,
-        serializer: Serializer[T],
         rows: List[T],
     ):
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
         self._wrapper = wrapper
-        self._serializer = serializer
         self._rows = rows
-
-        self._query = GoogleSheetQueryBuilder()
 
     def execute(self) -> None:
         """Execute the insert statement.
@@ -208,27 +177,21 @@ class InsertStmt(Generic[T]):
             >> row.rid
             2
         """
-        raw_values = self._get_raw_values()
-        result = self._wrapper.overwrite_rows(
+        self._wrapper.overwrite_rows(
             self._spreadsheet_id,
             A1Range.from_notation(self._sheet_name),
-            raw_values,
+            self._get_raw_values(),
         )
-
-        for idx, row in enumerate(result.inserted_values):
-            self._rows[idx].rid = int(row[0])
 
     def _get_raw_values(self) -> List[List[str]]:
         raw_values = []
 
         for row in self._rows:
-            serialized = self._serializer.serialize(row)
+            raw = ["=ROW()"]
+            for field_name in row._fields:
+                raw.append(getattr(row, field_name))
 
-            # We don't want user to set the value of PK.
-            # Note that we can't do serialized["A"] = "=ROW()" because if serialized doesn't contain "A" it will be
-            # put in the back when we call serialized.values().
-            serialized.pop("A", None)
-            raw_values.append(["=ROW()"] + list(serialized.values()))
+            raw_values.append(raw)
 
         return raw_values
 
@@ -239,16 +202,17 @@ class UpdateStmt:
         spreadsheet_id: str,
         sheet_name: str,
         wrapper: GoogleSheetWrapper,
-        mapper: FieldColumnMapper,
+        replacer: ColumnReplacer,
+        object_cls: Type[Model],
         update_values: Dict[str, str],
     ):
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
         self._wrapper = wrapper
-        self._mapper = mapper
+        self._object_cls = object_cls
         self._update_values = update_values
 
-        self._query = GoogleSheetQueryBuilder()
+        self._query = GoogleSheetQueryBuilder(replacer)
 
     def where(self, condition: str, *args: Any) -> "UpdateStmt":
         """Filter the rows that we're going to update.
@@ -270,8 +234,7 @@ class UpdateStmt:
             >> store.update({"name": "cat"}).where("age > ?", 10).execute()
             10
         """
-        mapped_condition = map_conditions(self._mapper, condition)
-        self._query.where(mapped_condition, *args)
+        self._query.where(condition, *args)
         return self
 
     def execute(self) -> int:
@@ -282,7 +245,7 @@ class UpdateStmt:
         """
         # ASSUMPTION: PK is in the first cell.
         affected_rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["A"]))
-        update_candidate_indices = [int(row["A"]) for row in affected_rows]
+        update_candidate_indices = [int(row[0]) for row in affected_rows]
 
         self._update_rows(update_candidate_indices)
 
@@ -291,11 +254,11 @@ class UpdateStmt:
     def _update_rows(self, indices: List[int]):
         requests = []
         for row_idx in indices:
-            for col_idx, col in enumerate(self._mapper._col_name_by_field):
+            for col_idx, col in enumerate(self._object_cls._fields.keys()):
                 if col not in self._update_values:
                     continue
 
-                cell_selector = A1CellSelector.from_rc(col_idx + 1, row_idx)
+                cell_selector = A1CellSelector.from_rc(col_idx + 2, row_idx)
                 update_range = A1Range(self._sheet_name, cell_selector, cell_selector)
                 requests.append(BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
 
@@ -308,14 +271,13 @@ class DeleteStmt:
         spreadsheet_id: str,
         sheet_name: str,
         wrapper: GoogleSheetWrapper,
-        mapper: FieldColumnMapper,
+        replacer: ColumnReplacer,
     ):
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
         self._wrapper = wrapper
-        self._mapper = mapper
 
-        self._query = GoogleSheetQueryBuilder()
+        self._query = GoogleSheetQueryBuilder(replacer)
 
     def where(self, condition: str, *args: Any) -> "DeleteStmt":
         """Filter the rows that we're going to delete.
@@ -337,8 +299,7 @@ class DeleteStmt:
             >> store.delete().where("age > ?", 10).execute()
             10
         """
-        mapped_condition = map_conditions(self._mapper, condition)
-        self._query.where(mapped_condition, *args)
+        self._query.where(condition, *args)
         return self
 
     def execute(self) -> int:
@@ -349,7 +310,7 @@ class DeleteStmt:
         """
         # ASSUMPTION: PK is in the first cell.
         affected_rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["A"]))
-        update_candidate_indices = [int(row["A"]) for row in affected_rows]
+        update_candidate_indices = [int(row[0]) for row in affected_rows]
 
         requests = []
         for row_idx in update_candidate_indices:
