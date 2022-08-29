@@ -1,10 +1,10 @@
 from typing import Any, Dict, Generic, List, Type, TypeVar
 
-from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
-from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
-from pyfreeleh.row.base import Ordering
-from pyfreeleh.row.models import Model
-from pyfreeleh.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
+from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
+from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreedb.row.base import Ordering
+from pyfreedb.row.models import Model
+from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
 
 T = TypeVar("T", bound=Model)
 

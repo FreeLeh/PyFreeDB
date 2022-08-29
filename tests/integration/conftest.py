@@ -7,7 +7,7 @@ from typing import Iterator
 import pytest
 from googleapiclient.discovery import build
 
-from pyfreeleh.providers.google.auth import ServiceAccountGoogleAuthClient
+from pyfreedb.providers.google.auth import ServiceAccountGoogleAuthClient
 
 
 @dataclasses.dataclass

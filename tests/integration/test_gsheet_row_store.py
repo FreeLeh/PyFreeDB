@@ -1,6 +1,6 @@
 import pytest
 
-from pyfreeleh.row import GoogleSheetRowStore, Ordering, models
+from pyfreedb.row import GoogleSheetRowStore, Ordering, models
 
 from .conftest import IntegrationTestConfig
 

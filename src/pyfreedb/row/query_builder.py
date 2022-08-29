@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from pyfreeleh.providers.google.sheet.base import A1CellSelector
+from pyfreedb.providers.google.sheet.base import A1CellSelector
 
 from .base import Ordering
 from .models import Model

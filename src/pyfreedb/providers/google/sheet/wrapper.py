@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union
 import requests
 from googleapiclient.discovery import build
 
-from pyfreeleh.providers.google.auth.base import GoogleAuthClient
+from pyfreedb.providers.google.auth.base import GoogleAuthClient
 
 from .base import A1Range, BatchUpdateRowsRequest, InsertRowsResult, UpdateRowsResult
 

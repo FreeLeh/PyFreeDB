@@ -1,11 +1,11 @@
 from typing import Any, Dict, Generic, List, Type, TypeVar
 
-from pyfreeleh.providers.google.auth.base import GoogleAuthClient
-from pyfreeleh.providers.google.sheet.base import A1Range
-from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
-from pyfreeleh.row.models import Model
-from pyfreeleh.row.query_builder import ColumnReplacer
-from pyfreeleh.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
+from pyfreedb.providers.google.auth.base import GoogleAuthClient
+from pyfreedb.providers.google.sheet.base import A1Range
+from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreedb.row.models import Model
+from pyfreedb.row.query_builder import ColumnReplacer
+from pyfreedb.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
 
 T = TypeVar("T", bound=Model)
 

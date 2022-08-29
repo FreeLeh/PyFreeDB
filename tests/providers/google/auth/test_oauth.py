@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from pyfreeleh.providers.google.auth.oauth import OAuth2GoogleAuthClient
+from pyfreedb.providers.google.auth.oauth import OAuth2GoogleAuthClient
 
 user_secret_info = {
     "token": "token",

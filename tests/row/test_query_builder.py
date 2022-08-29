@@ -1,5 +1,5 @@
-from pyfreeleh.row.base import Ordering
-from pyfreeleh.row.query_builder import GoogleSheetQueryBuilder
+from pyfreedb.row.base import Ordering
+from pyfreedb.row.query_builder import GoogleSheetQueryBuilder
 
 
 def test_query_builder() -> None:

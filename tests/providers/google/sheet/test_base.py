@@ -1,4 +1,4 @@
-from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range
+from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range
 
 
 def test_cell_selector() -> None:

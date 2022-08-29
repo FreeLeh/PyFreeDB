@@ -1,11 +1,11 @@
 import time
 from typing import Any, Callable, List
 
-from pyfreeleh.base import Codec, InvalidOperationError
-from pyfreeleh.codec import BasicCodec
-from pyfreeleh.providers.google.auth.base import GoogleAuthClient
-from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range
-from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreedb.base import Codec, InvalidOperationError
+from pyfreedb.codec import BasicCodec
+from pyfreedb.providers.google.auth.base import GoogleAuthClient
+from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range
+from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
 
 from .base import KeyNotFoundError, KVStore
 

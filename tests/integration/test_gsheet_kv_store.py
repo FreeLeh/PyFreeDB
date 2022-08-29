@@ -2,8 +2,8 @@ from typing import Any, Callable
 
 import pytest
 
-from pyfreeleh.kv.base import KeyNotFoundError
-from pyfreeleh.kv.gsheet import GoogleSheetKVStore
+from pyfreedb.kv.base import KeyNotFoundError
+from pyfreedb.kv.gsheet import GoogleSheetKVStore
 
 from .conftest import IntegrationTestConfig
 

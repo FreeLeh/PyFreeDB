@@ -1,6 +1,6 @@
 from typing import List, Type
 
-from pyfreeleh.row import models
+from pyfreedb.row import models
 
 
 class A(models.Model):
