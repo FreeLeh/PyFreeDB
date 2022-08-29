@@ -1,5 +1,4 @@
 import pytest
-from typing import List, Type
 
 from pyfreedb.row import models
 

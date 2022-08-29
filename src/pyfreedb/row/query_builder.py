@@ -14,7 +14,7 @@ class ColumnReplacer:
     def __init__(self, model: Type[Model]):
         self._replace_map = self._get_col_name_mapping(model)
 
-    def _get_col_name_mapping(self, model) -> Dict[str, str]:
+    def _get_col_name_mapping(self, model: Type[Model]) -> Dict[str, str]:
         result = {}
         for idx, field in enumerate(model._fields.values()):
             result[field._field_name] = str(A1CellSelector.from_rc(column=idx + 2))

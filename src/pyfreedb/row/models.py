@@ -13,16 +13,16 @@ T = TypeVar("T")
 
 class Field(Generic[T]):
     _typ: Type[T]
-    _header_name: Optional[str]
+    _header_name: str
     _field_name: str
 
-    def __init__(self, header_name: Optional[str] = None) -> None:
+    def __init__(self, header_name: str = "") -> None:
         self._header_name = header_name
 
     def __set_name__(self, _: Any, name: str) -> None:
         self._field_name = name
 
-        if self._header_name is None:
+        if self._header_name == "":
             self._header_name = name
 
     def __get__(self, obj: Any, _: Any) -> Optional[T]:
@@ -33,7 +33,7 @@ class Field(Generic[T]):
         self.__ensure_type(value)
         return setattr(obj._data, self._field_name, value)
 
-    def __ensure_type(self, value) -> None:
+    def __ensure_type(self, value: Any) -> None:
         if value is None or value is NotSet:
             return
 

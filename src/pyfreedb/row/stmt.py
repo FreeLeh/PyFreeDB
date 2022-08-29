@@ -251,7 +251,7 @@ class UpdateStmt:
 
         return len(update_candidate_indices)
 
-    def _update_rows(self, indices: List[int]):
+    def _update_rows(self, indices: List[int]) -> None:
         requests = []
         for row_idx in indices:
             for col_idx, col in enumerate(self._object_cls._fields.keys()):

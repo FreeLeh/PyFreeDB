@@ -8,7 +8,7 @@ from .conftest import IntegrationTestConfig
 class Customer(models.Model):
     name = models.StringField()
     age = models.IntegerField()
-    dob = models.StringField()
+    dob = models.StringField(header_name="date of birth")
 
 
 @pytest.mark.integration
