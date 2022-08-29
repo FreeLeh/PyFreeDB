@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generic, List, Type, TypeVar
+from typing import Any, Dict, Generic, List, Type, TypeVar, TYPE_CHECKING
 
 from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
 from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
@@ -6,16 +6,16 @@ from pyfreedb.row.base import Ordering
 from pyfreedb.row.models import Model
 from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
 
+if TYPE_CHECKING:
+    from pyfreedb.row.gsheet import GoogleSheetRowStore
+
 T = TypeVar("T", bound=Model)
 
 
 class CountStmt:
-    def __init__(self, spreadsheet_id: str, sheet_name: str, wrapper: GoogleSheetWrapper, replacer: ColumnReplacer):
-        self._spreadsheet_id = spreadsheet_id
-        self._sheet_name = sheet_name
-        self._wrapper = wrapper
-
-        self._query = GoogleSheetQueryBuilder(replacer)
+    def __init__(self, store: "GoogleSheetRowStore"):
+        self._store = store
+        self._query = GoogleSheetQueryBuilder(store._replacer)
 
     def where(self, condition: str, *args: Any) -> "CountStmt":
         """Filter the rows that we're going to count.
@@ -46,27 +46,16 @@ class CountStmt:
         Returns:
             int: number of rows that matched with the given condition.
         """
-        rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["COUNT(A)"]))
+        query = self._query.build_select(["COUNT(_rid)"])
+        rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
         return int(rows[0][0])
 
 
 class SelectStmt(Generic[T]):
-    def __init__(
-        self,
-        spreadsheet_id: str,
-        sheet_name: str,
-        wrapper: GoogleSheetWrapper,
-        object_cls: Type[T],
-        replacer: ColumnReplacer,
-        selected_columns: List[str],
-    ):
-        self._spreadsheet_id = spreadsheet_id
-        self._sheet_name = sheet_name
-        self._wrapper = wrapper
-        self._object_cls = object_cls
+    def __init__(self, store: "GoogleSheetRowStore", selected_columns: List[str]):
+        self._store = store
         self._selected_columns = selected_columns
-
-        self._query = GoogleSheetQueryBuilder(replacer)
+        self._query = GoogleSheetQueryBuilder(store._replacer)
 
     def where(self, condition: str, *args: Any) -> "SelectStmt[T]":
         """Filter the rows that we're going to get.
@@ -133,35 +122,23 @@ class SelectStmt(Generic[T]):
         Returns:
             list: list of rows that matched the given condition.
         """
-        rows = self._wrapper.query(
-            self._spreadsheet_id,
-            self._sheet_name,
-            self._query.build_select(self._selected_columns),
-        )
+        query = self._query.build_select(self._selected_columns)
+        rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
 
         results = []
         for row in rows:
-            print(row)
             raw = {}
             for idx, col in enumerate(self._selected_columns):
                 raw[col] = row[idx]
 
-            results.append(self._object_cls(**raw))
+            results.append(self._store._object_cls(**raw))
 
         return results
 
 
 class InsertStmt(Generic[T]):
-    def __init__(
-        self,
-        spreadsheet_id: str,
-        sheet_name: str,
-        wrapper: GoogleSheetWrapper,
-        rows: List[T],
-    ):
-        self._spreadsheet_id = spreadsheet_id
-        self._sheet_name = sheet_name
-        self._wrapper = wrapper
+    def __init__(self, store: "GoogleSheetRowStore", rows: List[T]):
+        self._store = store
         self._rows = rows
 
     def execute(self) -> None:
@@ -177,9 +154,9 @@ class InsertStmt(Generic[T]):
             >> row.rid
             2
         """
-        self._wrapper.overwrite_rows(
-            self._spreadsheet_id,
-            A1Range.from_notation(self._sheet_name),
+        self._store._wrapper.overwrite_rows(
+            self._store._spreadsheet_id,
+            A1Range.from_notation(self._store._sheet_name),
             self._get_raw_values(),
         )
 
@@ -187,7 +164,9 @@ class InsertStmt(Generic[T]):
         raw_values = []
 
         for row in self._rows:
+            # Set _rid value according to the insert protocol.
             raw = ["=ROW()"]
+
             for field_name in row._fields:
                 raw.append(getattr(row, field_name))
 
@@ -197,22 +176,10 @@ class InsertStmt(Generic[T]):
 
 
 class UpdateStmt:
-    def __init__(
-        self,
-        spreadsheet_id: str,
-        sheet_name: str,
-        wrapper: GoogleSheetWrapper,
-        replacer: ColumnReplacer,
-        object_cls: Type[Model],
-        update_values: Dict[str, str],
-    ):
-        self._spreadsheet_id = spreadsheet_id
-        self._sheet_name = sheet_name
-        self._wrapper = wrapper
-        self._object_cls = object_cls
+    def __init__(self, store: "GoogleSheetRowStore", update_values: Dict[str, str]):
+        self._store = store
         self._update_values = update_values
-
-        self._query = GoogleSheetQueryBuilder(replacer)
+        self._query = GoogleSheetQueryBuilder(store._replacer)
 
     def where(self, condition: str, *args: Any) -> "UpdateStmt":
         """Filter the rows that we're going to update.
@@ -243,8 +210,8 @@ class UpdateStmt:
         Returns:
             int: the number of updated rows.
         """
-        # ASSUMPTION: PK is in the first cell.
-        affected_rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["A"]))
+        query = self._query.build_select(["_rid"])
+        affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
         update_candidate_indices = [int(row[0]) for row in affected_rows]
 
         self._update_rows(update_candidate_indices)
@@ -254,30 +221,21 @@ class UpdateStmt:
     def _update_rows(self, indices: List[int]) -> None:
         requests = []
         for row_idx in indices:
-            for col_idx, col in enumerate(self._object_cls._fields.keys()):
+            for col_idx, col in enumerate(self._store._object_cls._fields.keys()):
                 if col not in self._update_values:
                     continue
 
                 cell_selector = A1CellSelector.from_rc(col_idx + 2, row_idx)
-                update_range = A1Range(self._sheet_name, cell_selector, cell_selector)
+                update_range = A1Range(self._store._sheet_name, cell_selector, cell_selector)
                 requests.append(BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
 
-        self._wrapper.batch_update_rows(self._spreadsheet_id, requests)
+        self._store._wrapper.batch_update_rows(self._store._spreadsheet_id, requests)
 
 
 class DeleteStmt:
-    def __init__(
-        self,
-        spreadsheet_id: str,
-        sheet_name: str,
-        wrapper: GoogleSheetWrapper,
-        replacer: ColumnReplacer,
-    ):
-        self._spreadsheet_id = spreadsheet_id
-        self._sheet_name = sheet_name
-        self._wrapper = wrapper
-
-        self._query = GoogleSheetQueryBuilder(replacer)
+    def __init__(self, store: "GoogleSheetRowStore"):
+        self._store = store
+        self._query = GoogleSheetQueryBuilder(store._replacer)
 
     def where(self, condition: str, *args: Any) -> "DeleteStmt":
         """Filter the rows that we're going to delete.
@@ -308,15 +266,17 @@ class DeleteStmt:
         Returns:
             int: number of rows deleted.
         """
-        # ASSUMPTION: PK is in the first cell.
-        affected_rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["A"]))
-        update_candidate_indices = [int(row[0]) for row in affected_rows]
+        query = self._query.build_select(["_rid"])
+        affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+        affected_row_indices = [int(row[0]) for row in affected_rows]
 
+        self._delete_rows(affected_row_indices)
+        return len(affected_row_indices)
+
+    def _delete_rows(self, indices: List[int]) -> None:
         requests = []
-        for row_idx in update_candidate_indices:
+        for row_idx in indices:
             row_selector = A1CellSelector.from_rc(row=row_idx)
-            requests.append(A1Range(self._sheet_name, start=row_selector, end=row_selector))
+            requests.append(A1Range(self._store._sheet_name, start=row_selector, end=row_selector))
 
-        self._wrapper.clear(self._spreadsheet_id, requests)
-
-        return len(update_candidate_indices)
+        self._store._wrapper.clear(self._store._spreadsheet_id, requests)

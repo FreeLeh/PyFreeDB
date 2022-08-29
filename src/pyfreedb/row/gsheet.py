@@ -72,14 +72,7 @@ class GoogleSheetRowStore(Generic[T]):
         if len(selected_columns) == 0:
             selected_columns = self._columns
 
-        return SelectStmt(
-            self._spreadsheet_id,
-            self._sheet_name,
-            self._wrapper,
-            self._object_cls,
-            self._replacer,
-            selected_columns,
-        )
+        return SelectStmt(self, selected_columns)
 
     def insert(self, rows: List[T]) -> InsertStmt[T]:
         """Create the insert statement to insert given rows into the sheet.
@@ -90,7 +83,7 @@ class GoogleSheetRowStore(Generic[T]):
         Returns:
             InsertStmt: the insert statement that is configured to insert the given rows.
         """
-        return InsertStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, rows)
+        return InsertStmt(self, rows)
 
     def update(self, update_value: Dict[str, Any]) -> UpdateStmt:
         """Create the update statement to update rows on the sheet with the given value.
@@ -111,14 +104,7 @@ class GoogleSheetRowStore(Generic[T]):
             if key not in self._object_cls._fields:
                 raise ValueError(f"{key} field is not recognised.")
 
-        return UpdateStmt(
-            self._spreadsheet_id,
-            self._sheet_name,
-            self._wrapper,
-            self._replacer,
-            self._object_cls,
-            update_value,
-        )
+        return UpdateStmt(self, update_value)
 
     def delete(self) -> DeleteStmt:
         """Create a delete statement to delete the affected rows.
@@ -126,7 +112,7 @@ class GoogleSheetRowStore(Generic[T]):
         Returns:
             DeleteStmt: a delete statement.
         """
-        return DeleteStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._replacer)
+        return DeleteStmt(self)
 
     def count(self) -> CountStmt:
         """Create a count statement to count how many rows are there in the sheet.
@@ -140,4 +126,4 @@ class GoogleSheetRowStore(Generic[T]):
             >> store.count().where("name = ?", "cat").execute()
             10
         """
-        return CountStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._replacer)
+        return CountStmt(self)

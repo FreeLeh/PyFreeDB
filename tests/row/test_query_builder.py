@@ -7,6 +7,10 @@ class DummyReplacer:
         return val
 
 
+def test_mapping() -> None:
+    pass
+
+
 def test_query_builder() -> None:
     def new_query_builder() -> GoogleSheetQueryBuilder:
         return GoogleSheetQueryBuilder(DummyReplacer())
