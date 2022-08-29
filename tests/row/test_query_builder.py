@@ -1,5 +1,7 @@
+from pyfreedb.row import query_builder
 from pyfreedb.row.base import Ordering
-from pyfreedb.row.query_builder import GoogleSheetQueryBuilder
+from pyfreedb.row import models
+from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
 
 
 class DummyReplacer:
@@ -7,14 +9,38 @@ class DummyReplacer:
         return val
 
 
-def test_mapping() -> None:
-    pass
+class DummyModel(models.Model):
+    field1 = models.IntegerField()
+    field2 = models.IntegerField()
+
+
+def test_replacer() -> None:
+    # Get the basics right.
+    replacer = ColumnReplacer(DummyModel)
+    assert replacer.replace("_rid") == "A"
+    assert replacer.replace("field1") == "B"
+    assert replacer.replace("field2") == "C"
+
+    # Can replace multiple occurences.
+    assert replacer.replace("_rid field1 field2 field1") == "A B C B"
+
+
+def test_query_builder_mapping() -> None:
+    replacer = ColumnReplacer(DummyModel)
+    query_builder = GoogleSheetQueryBuilder(replacer)
+
+    query = (
+        query_builder.where("field1 = ?", "field1")
+        .order_by(Ordering.ASC("field1"), Ordering.DESC("field2"))
+        .limit(1)
+        .offset(1)
+        .build_select(["_rid", "field1"])
+    )
+
+    assert query == 'SELECT A,B WHERE B = "field1" ORDER BY B ASC, C DESC LIMIT 1 OFFSET 1'
 
 
 def test_query_builder() -> None:
-    def new_query_builder() -> GoogleSheetQueryBuilder:
-        return GoogleSheetQueryBuilder(DummyReplacer())
-
     query = new_query_builder().build_select(["B", "C"])
     assert query == "SELECT B,C"
 
@@ -35,3 +61,7 @@ def test_query_builder() -> None:
 
     query = new_query_builder().where("B == ?", "hello").limit(10).offset(5).build_select(["B", "C"])
     assert query == 'SELECT B,C WHERE B == "hello" LIMIT 10 OFFSET 5'
+
+
+def new_query_builder() -> GoogleSheetQueryBuilder:
+    return GoogleSheetQueryBuilder(DummyReplacer())
