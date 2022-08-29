@@ -11,6 +11,8 @@ T = TypeVar("T", bound=Model)
 
 
 class GoogleSheetRowStore(Generic[T]):
+    RID_COLUMN_NAME = "_rid"
+
     def __init__(
         self,
         auth_client: GoogleAuthClient,
@@ -49,7 +51,7 @@ class GoogleSheetRowStore(Generic[T]):
         except Exception:
             pass
 
-        column_headers = ["_rid"]
+        column_headers = [self.RID_COLUMN_NAME]
         for field in self._object_cls._fields.values():
             column_headers.append(field._header_name)
 
@@ -105,6 +107,10 @@ class GoogleSheetRowStore(Generic[T]):
             >> store.update({"name": "cat"}).execute()
             10
         """
+        for key in update_value:
+            if key not in self._object_cls._fields:
+                raise ValueError(f"{key} field is not recognised.")
+
         return UpdateStmt(
             self._spreadsheet_id,
             self._sheet_name,

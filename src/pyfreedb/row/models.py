@@ -30,7 +30,15 @@ class Field(Generic[T]):
         return cast(Optional[T], value)
 
     def __set__(self, obj: Any, value: Optional[T]) -> None:
+        self.__ensure_type(value)
         return setattr(obj._data, self._field_name, value)
+
+    def __ensure_type(self, value) -> None:
+        if value is None or value is NotSet:
+            return
+
+        if not isinstance(value, self._typ):
+            raise TypeError(f"value of field {self._field_name} has the wrong type")
 
 
 class IntegerField(Field[int]):
@@ -47,10 +55,6 @@ class BoolField(Field[bool]):
 
 class StringField(Field[str]):
     _typ = str
-
-
-class PrimaryKeyField(IntegerField):
-    pass
 
 
 class meta(type):
@@ -86,6 +90,7 @@ class meta(type):
         # annotation to improve the developer experience.
         def init(self: Any, *args: Any, **kwargs: Any) -> None:
             self._data = data_cls(*args, **kwargs)
+            self._validate_type()
 
         def repr(self: Any) -> str:
             return str(self._data)
@@ -103,3 +108,8 @@ class meta(type):
 
 class Model(metaclass=meta):
     _fields: Dict[str, Union[IntegerField, FloatField, BoolField, StringField]]
+
+    def _validate_type(self) -> None:
+        for field in self._fields:
+            # Trigger the validation by reassigning the value to itself.
+            setattr(self, field, getattr(self, field))

@@ -1,3 +1,4 @@
+import pytest
 from typing import List, Type
 
 from pyfreedb.row import models
@@ -14,12 +15,18 @@ class B(A):
     another_field = models.StringField()
 
 
-def test_model() -> None:
-    # Parent's field should come first.
+def test_model_mro() -> None:
+    obj = A()
+    a_fields = list(obj._fields.keys())
+    assert a_fields == ["integer_field", "float_field", "string_field", "bool_field"]
+
+    # Parent class' field should come first.
     obj = B()
     b_fields = list(obj._fields.keys())
-    assert b_fields == ["rid", "integer_field", "float_field", "string_field", "bool_field", "another_field"]
+    assert b_fields == a_fields + ["another_field"]
 
+
+def test_model() -> None:
     # Can instantiate using __init__.
     obj = A(integer_field=1, float_field=1.0, string_field="abcd", bool_field=False)
     assert obj.integer_field == 1
@@ -46,17 +53,22 @@ def test_model() -> None:
     b = B()
     assert a1 != b
 
-    # object that is not created by store should have _rid = NotSet
-    a = A()
-    assert a.rid is models.NotSet
 
-    # rid must be the first field.
-    class ReorderedPK(models.Model):
-        a = models.IntegerField()
-        rid = models.PrimaryKeyField()
+def test_model_type_check() -> None:
+    # Should be able to handle None.
+    obj = A()
+    obj.bool_field = None
+    obj.bool_field = models.NotSet
 
-    assert get_model_fields(ReorderedPK) == ["rid", "a"]
+    # Should raise TypeError when we pass wrong type.
+    try:
+        obj.bool_field = "hello"
+        pytest.fail("should raise TypeError")
+    except TypeError:
+        pass
 
-
-def get_model_fields(cls: Type[models.Model]) -> List[str]:
-    return list(cls._fields.keys())
+    try:
+        A(bool_field="hello")
+        pytest.fail("should raise TypeError")
+    except TypeError:
+        pass
