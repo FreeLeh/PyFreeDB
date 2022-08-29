@@ -15,7 +15,7 @@ class DummyModel(models.Model):
 
 def test_replacer() -> None:
     # Get the basics right.
-    replacer = ColumnReplacer(DummyModel)
+    replacer = ColumnReplacer("_rid", DummyModel)
     assert replacer.replace("_rid") == "A"
     assert replacer.replace("field1") == "B"
     assert replacer.replace("field2") == "C"
@@ -25,7 +25,7 @@ def test_replacer() -> None:
 
 
 def test_query_builder_mapping() -> None:
-    replacer = ColumnReplacer(DummyModel)
+    replacer = ColumnReplacer("_rid", DummyModel)
     query_builder = GoogleSheetQueryBuilder(replacer)
 
     query = (
