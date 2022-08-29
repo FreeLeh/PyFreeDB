@@ -86,7 +86,7 @@ class GoogleSheetRowStore(Generic[T]):
         """
         return InsertStmt(self, rows)
 
-    def update(self, update_value: Dict[str, Any]) -> UpdateStmt:
+    def update(self, update_value: Dict[str, Any]) -> UpdateStmt[T]:
         """Create the update statement to update rows on the sheet with the given value.
 
         Args:
@@ -107,7 +107,7 @@ class GoogleSheetRowStore(Generic[T]):
 
         return UpdateStmt(self, update_value)
 
-    def delete(self) -> DeleteStmt:
+    def delete(self) -> DeleteStmt[T]:
         """Create a delete statement to delete the affected rows.
 
         Returns:
@@ -115,7 +115,7 @@ class GoogleSheetRowStore(Generic[T]):
         """
         return DeleteStmt(self)
 
-    def count(self) -> CountStmt:
+    def count(self) -> CountStmt[T]:
         """Create a count statement to count how many rows are there in the sheet.
 
         Returns:

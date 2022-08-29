@@ -1,6 +1,5 @@
-from pyfreedb.row import query_builder
-from pyfreedb.row.base import Ordering
 from pyfreedb.row import models
+from pyfreedb.row.base import Ordering
 from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
 
 

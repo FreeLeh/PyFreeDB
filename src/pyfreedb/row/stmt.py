@@ -1,10 +1,8 @@
-from typing import Any, Dict, Generic, List, Type, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Generic, List, TypeVar
 
 from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
-from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
 from pyfreedb.row.base import Ordering
 from pyfreedb.row.models import Model
-from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
 
 if TYPE_CHECKING:
     from pyfreedb.row.gsheet import GoogleSheetRowStore
@@ -12,12 +10,12 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound=Model)
 
 
-class CountStmt:
-    def __init__(self, store: "GoogleSheetRowStore"):
+class CountStmt(Generic[T]):
+    def __init__(self, store: "GoogleSheetRowStore[T]"):
         self._store = store
         self._query = store._new_query_builder()
 
-    def where(self, condition: str, *args: Any) -> "CountStmt":
+    def where(self, condition: str, *args: Any) -> "CountStmt[T]":
         """Filter the rows that we're going to count.
 
         The given `condition` will be used as the WHERE clause on the final query. You can use `"?"` placeholder
@@ -52,7 +50,7 @@ class CountStmt:
 
 
 class SelectStmt(Generic[T]):
-    def __init__(self, store: "GoogleSheetRowStore", selected_columns: List[str]):
+    def __init__(self, store: "GoogleSheetRowStore[T]", selected_columns: List[str]):
         self._store = store
         self._selected_columns = selected_columns
         self._query = store._new_query_builder()
@@ -137,7 +135,7 @@ class SelectStmt(Generic[T]):
 
 
 class InsertStmt(Generic[T]):
-    def __init__(self, store: "GoogleSheetRowStore", rows: List[T]):
+    def __init__(self, store: "GoogleSheetRowStore[T]", rows: List[T]):
         self._store = store
         self._rows = rows
 
@@ -175,13 +173,13 @@ class InsertStmt(Generic[T]):
         return raw_values
 
 
-class UpdateStmt:
-    def __init__(self, store: "GoogleSheetRowStore", update_values: Dict[str, str]):
+class UpdateStmt(Generic[T]):
+    def __init__(self, store: "GoogleSheetRowStore[T]", update_values: Dict[str, str]):
         self._store = store
         self._update_values = update_values
         self._query = store._new_query_builder()
 
-    def where(self, condition: str, *args: Any) -> "UpdateStmt":
+    def where(self, condition: str, *args: Any) -> "UpdateStmt[T]":
         """Filter the rows that we're going to update.
 
         The given `condition` will be used as the WHERE clause on the final query. You can use `"?"` placeholder
@@ -232,12 +230,12 @@ class UpdateStmt:
         self._store._wrapper.batch_update_rows(self._store._spreadsheet_id, requests)
 
 
-class DeleteStmt:
-    def __init__(self, store: "GoogleSheetRowStore"):
+class DeleteStmt(Generic[T]):
+    def __init__(self, store: "GoogleSheetRowStore[T]"):
         self._store = store
         self._query = store._new_query_builder()
 
-    def where(self, condition: str, *args: Any) -> "DeleteStmt":
+    def where(self, condition: str, *args: Any) -> "DeleteStmt[T]":
         """Filter the rows that we're going to delete.
 
         The given `condition` will be used as the WHERE clause on the final query. You can use `"?"` placeholder
