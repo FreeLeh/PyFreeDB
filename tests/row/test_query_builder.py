@@ -15,6 +15,9 @@ def test_query_builder() -> None:
     query = GoogleSheetQueryBuilder().order_by(Ordering.ASC("A"), Ordering.DESC("B")).build_select(["A", "B"])
     assert query == "SELECT A,B WHERE A IS NOT NULL ORDER BY A ASC, B DESC"
 
+    query = GoogleSheetQueryBuilder().order_by(Ordering.DESC("B"), Ordering.ASC("A")).build_select(["A", "B"])
+    assert query == "SELECT A,B WHERE A IS NOT NULL ORDER BY B DESC, A ASC"
+
     query = GoogleSheetQueryBuilder().where("B == ?", "hello").build_select(["B"])
     assert query == 'SELECT B WHERE A IS NOT NULL AND B == "hello"'
 

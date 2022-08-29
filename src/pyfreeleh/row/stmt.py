@@ -1,7 +1,7 @@
 from typing import Any, Dict, Generic, List, TypeVar
 
 from pyfreeleh.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
-from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetSession
+from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 from pyfreeleh.row.base import Ordering
 from pyfreeleh.row.models import Model
 from pyfreeleh.row.query_builder import GoogleSheetQueryBuilder
@@ -30,10 +30,14 @@ def map_conditions(mapper: FieldColumnMapper, condition: str) -> str:
 class CountStmt:
     def __init__(
         self,
-        sheet_session: GoogleSheetSession,
+        spreadsheet_id: str,
+        sheet_name: str,
+        wrapper: GoogleSheetWrapper,
         mapper: FieldColumnMapper,
     ):
-        self._sheet_session = sheet_session
+        self._spreadsheet_id = spreadsheet_id
+        self._sheet_name = sheet_name
+        self._wrapper = wrapper
         self._mapper = mapper
 
         self._query = GoogleSheetQueryBuilder()
@@ -68,19 +72,23 @@ class CountStmt:
         Returns:
             int: number of rows that matched with the given condition.
         """
-        rows = self._sheet_session.query(self._query.build_select(["COUNT(A)"]))
+        rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["COUNT(A)"]))
         return int(rows[0]["count-A"])
 
 
 class SelectStmt(Generic[T]):
     def __init__(
         self,
-        sheet_session: GoogleSheetSession,
+        spreadsheet_id: str,
+        sheet_name: str,
+        wrapper: GoogleSheetWrapper,
         serializer: Serializer[T],
         mapper: FieldColumnMapper,
         selected_columns: List[str],
     ):
-        self._sheet_session = sheet_session
+        self._spreadsheet_id = spreadsheet_id
+        self._sheet_name = sheet_name
+        self._wrapper = wrapper
         self._serializer = serializer
         self._mapper = mapper
         self._selected_columns = selected_columns
@@ -161,7 +169,7 @@ class SelectStmt(Generic[T]):
         if "A" not in mapped_columns:
             mapped_columns.insert(0, "A")
 
-        rows = self._sheet_session.query(self._query.build_select(mapped_columns))
+        rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(mapped_columns))
 
         results = []
         for row in rows:
@@ -173,11 +181,15 @@ class SelectStmt(Generic[T]):
 class InsertStmt(Generic[T]):
     def __init__(
         self,
-        sheet_session: GoogleSheetSession,
+        spreadsheet_id: str,
+        sheet_name: str,
+        wrapper: GoogleSheetWrapper,
         serializer: Serializer[T],
         rows: List[T],
     ):
-        self._sheet_session = sheet_session
+        self._spreadsheet_id = spreadsheet_id
+        self._sheet_name = sheet_name
+        self._wrapper = wrapper
         self._serializer = serializer
         self._rows = rows
 
@@ -197,7 +209,11 @@ class InsertStmt(Generic[T]):
             2
         """
         raw_values = self._get_raw_values()
-        result = self._sheet_session.overwrite_rows(A1Range.from_notation(self._sheet_session.sheet_name), raw_values)
+        result = self._wrapper.overwrite_rows(
+            self._spreadsheet_id,
+            A1Range.from_notation(self._sheet_name),
+            raw_values,
+        )
 
         for idx, row in enumerate(result.inserted_values):
             self._rows[idx].rid = int(row[0])
@@ -220,11 +236,15 @@ class InsertStmt(Generic[T]):
 class UpdateStmt:
     def __init__(
         self,
-        sheet_session: GoogleSheetSession,
+        spreadsheet_id: str,
+        sheet_name: str,
+        wrapper: GoogleSheetWrapper,
         mapper: FieldColumnMapper,
         update_values: Dict[str, str],
     ):
-        self._sheet_session = sheet_session
+        self._spreadsheet_id = spreadsheet_id
+        self._sheet_name = sheet_name
+        self._wrapper = wrapper
         self._mapper = mapper
         self._update_values = update_values
 
@@ -261,30 +281,38 @@ class UpdateStmt:
             int: the number of updated rows.
         """
         # ASSUMPTION: PK is in the first cell.
-        affected_rows = self._sheet_session.query(self._query.build_select(["A"]))
+        affected_rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["A"]))
         update_candidate_indices = [int(row["A"]) for row in affected_rows]
 
+        self._update_rows(update_candidate_indices)
+
+        return len(update_candidate_indices)
+
+    def _update_rows(self, indices: List[int]):
         requests = []
-        for row_idx in update_candidate_indices:
+        for row_idx in indices:
             for col_idx, col in enumerate(self._mapper._col_name_by_field):
                 if col not in self._update_values:
                     continue
 
                 cell_selector = A1CellSelector.from_rc(col_idx + 1, row_idx)
-                update_range = A1Range(self._sheet_session.sheet_name, cell_selector, cell_selector)
+                update_range = A1Range(self._sheet_name, cell_selector, cell_selector)
                 requests.append(BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
 
-        self._sheet_session.batch_update_rows(requests)
-        return len(update_candidate_indices)
+        self._wrapper.batch_update_rows(self._spreadsheet_id, requests)
 
 
 class DeleteStmt:
     def __init__(
         self,
-        sheet_session: GoogleSheetSession,
+        spreadsheet_id: str,
+        sheet_name: str,
+        wrapper: GoogleSheetWrapper,
         mapper: FieldColumnMapper,
     ):
-        self._sheet_session = sheet_session
+        self._spreadsheet_id = spreadsheet_id
+        self._sheet_name = sheet_name
+        self._wrapper = wrapper
         self._mapper = mapper
 
         self._query = GoogleSheetQueryBuilder()
@@ -320,14 +348,14 @@ class DeleteStmt:
             int: number of rows deleted.
         """
         # ASSUMPTION: PK is in the first cell.
-        affected_rows = self._sheet_session.query(self._query.build_select(["A"]))
+        affected_rows = self._wrapper.query(self._spreadsheet_id, self._sheet_name, self._query.build_select(["A"]))
         update_candidate_indices = [int(row["A"]) for row in affected_rows]
 
         requests = []
         for row_idx in update_candidate_indices:
             row_selector = A1CellSelector.from_rc(row=row_idx)
-            requests.append(A1Range(self._sheet_session.sheet_name, start=row_selector, end=row_selector))
+            requests.append(A1Range(self._sheet_name, start=row_selector, end=row_selector))
 
-        self._sheet_session.clear(requests)
+        self._wrapper.clear(self._spreadsheet_id, requests)
 
         return len(update_candidate_indices)

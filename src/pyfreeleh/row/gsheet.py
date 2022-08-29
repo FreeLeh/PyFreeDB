@@ -2,7 +2,7 @@ from typing import Any, Dict, Generic, List, Type, TypeVar
 
 from pyfreeleh.providers.google.auth.base import GoogleAuthClient
 from pyfreeleh.providers.google.sheet.base import A1Range
-from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetSession, GoogleSheetWrapper
+from pyfreeleh.providers.google.sheet.wrapper import GoogleSheetWrapper
 from pyfreeleh.row.models import Model, PrimaryKeyField
 from pyfreeleh.row.serializers import FieldColumnMapper, ModelGoogleSheetSerializer
 from pyfreeleh.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
@@ -35,20 +35,26 @@ class GoogleSheetRowStore(Generic[T]):
         self._sheet_name = sheet_name
         self._object_cls = object_cls
 
-        wrapper = GoogleSheetWrapper(auth_client)
-        self._sheet_session = GoogleSheetSession(wrapper, spreadsheet_id, sheet_name)
-        self._ensure_headers()
+        self._wrapper = GoogleSheetWrapper(auth_client)
+        self._spreadsheet_id = spreadsheet_id
+        self._sheet_name = sheet_name
+        self._ensure_sheet()
 
         self._columns = list(object_cls._fields.keys())
         self._serializer = ModelGoogleSheetSerializer(object_cls)
         self._mapper = FieldColumnMapper(object_cls)
 
-    def _ensure_headers(self) -> None:
+    def _ensure_sheet(self) -> None:
+        try:
+            self._wrapper.create_sheet(self._spreadsheet_id, self._sheet_name)
+        except Exception:
+            pass
+
         column_headers = []
         for field in self._object_cls._fields.values():
             column_headers.append(field._header_name)
 
-        self._sheet_session.update_rows(A1Range(self._sheet_name), [column_headers])
+        self._wrapper.update_rows(self._spreadsheet_id, A1Range(self._sheet_name), [column_headers])
 
     def select(self, *columns: str) -> SelectStmt[T]:
         """Create the select statement that will fetch the selected columns from the sheet.
@@ -65,7 +71,14 @@ class GoogleSheetRowStore(Generic[T]):
         if len(selected_columns) == 0:
             selected_columns = self._columns
 
-        return SelectStmt(self._sheet_session, self._serializer, self._mapper, selected_columns)
+        return SelectStmt(
+            self._spreadsheet_id,
+            self._sheet_name,
+            self._wrapper,
+            self._serializer,
+            self._mapper,
+            selected_columns,
+        )
 
     def insert(self, rows: List[T]) -> InsertStmt[T]:
         """Create the insert statement to insert given rows into the sheet.
@@ -76,7 +89,7 @@ class GoogleSheetRowStore(Generic[T]):
         Returns:
             InsertStmt: the insert statement that is configured to insert the given rows.
         """
-        return InsertStmt(self._sheet_session, self._serializer, rows)
+        return InsertStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._serializer, rows)
 
     def update(self, update_value: Dict[str, Any]) -> UpdateStmt:
         """Create the update statement to update rows on the sheet with the given value.
@@ -98,7 +111,7 @@ class GoogleSheetRowStore(Generic[T]):
         pk_col_name = self._get_pk_field_name()
         update_value.pop(pk_col_name, None)
 
-        return UpdateStmt(self._sheet_session, self._mapper, update_value)
+        return UpdateStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._mapper, update_value)
 
     def delete(self) -> DeleteStmt:
         """Create a delete statement to delete the affected rows.
@@ -106,7 +119,7 @@ class GoogleSheetRowStore(Generic[T]):
         Returns:
             DeleteStmt: a delete statement.
         """
-        return DeleteStmt(self._sheet_session, self._mapper)
+        return DeleteStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._mapper)
 
     def count(self) -> CountStmt:
         """Create a count statement to count how many rows are there in the sheet.
@@ -120,7 +133,7 @@ class GoogleSheetRowStore(Generic[T]):
             >> store.count().where("name = ?", "cat").execute()
             10
         """
-        return CountStmt(self._sheet_session, self._mapper)
+        return CountStmt(self._spreadsheet_id, self._sheet_name, self._wrapper, self._mapper)
 
     def _get_pk_field_name(self) -> str:
         for field in self._object_cls._fields.values():
