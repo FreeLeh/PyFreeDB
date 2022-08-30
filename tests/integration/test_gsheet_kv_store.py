@@ -10,7 +10,6 @@ from .conftest import IntegrationTestConfig
 
 @pytest.mark.integration
 def test_gsheet_kv_store_append_mode_integration(config: IntegrationTestConfig) -> None:
-    return
     kv_store = GoogleSheetKVStore(
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
@@ -22,7 +21,6 @@ def test_gsheet_kv_store_append_mode_integration(config: IntegrationTestConfig) 
 
 @pytest.mark.integration
 def test_gsheet_kv_store_default_mode_integration(config: IntegrationTestConfig) -> None:
-    return
     kv_store = GoogleSheetKVStore(
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
