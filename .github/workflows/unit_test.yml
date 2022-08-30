@@ -6,8 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.7', '3.10' ]
-    name: Python ${{ matrix.python-version }} 
+        python-version: ["3.7", "3.10"]
+    name: Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup Python
@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-          cache: 'pip'
+          cache: "pip"
       - run: ./scripts/dev.sh
       - run: ./scripts/test.sh
       - run: ./scripts/lint.sh
