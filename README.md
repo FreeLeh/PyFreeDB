@@ -1,6 +1,6 @@
-# PyFreeLeh
+# pyfreedb
 
-![Unit Test](https://github.com/FreeLeh/PyFreeLeh/actions/workflows/unit_test.yml/badge.svg)
+![Unit Test](https://github.com/FreeLeh/pyfreedb/actions/workflows/unit_test.yml/badge.svg)
 
 <div>
     <h2 align="center">
@@ -11,13 +11,13 @@
     </h2>
 </div>
 
-`PyFreeLeh` is a Python library providing common and familiar interfaces on top of common free services we have access to.
+`pyfreedb` is a Python library providing common and familiar interfaces on top of common free services we have access to.
 
 ## Why do you need this library?
 
 Our main goal is to make developers who want to **just start their small personal projects so much easier without thinking too much about the setup required to get started**. We can leverage a bunch of well known free services available to us like Google Sheets and Telegram. We want to use these services as our **easy-to-setup and "managed" database or even a message queue**.
 
-`PyFreeLeh` is just the beginning. It is very likely we will explore other languages (e.g. Java, Kotlin, Swift, etc.) to support in the future.
+`pyfreedb` is just the beginning. It is very likely we will explore other languages (e.g. Java, Kotlin, Swift, etc.) to support in the future.
 
 > Check out [GoFreeLeh](https://github.com/FreeLeh/GoFreeLeh/) for the Go version!
 
@@ -34,7 +34,7 @@ There are other ideas we have in our backlog:
 2. A simple message queue on top of Telegram Channels.
 
 We are quite open to knowing any other free services we can leverage on.<br>
-Please suggest your ideas in the [issues](https://github.com/FreeLeh/PyFreeLeh/issues) page!
+Please suggest your ideas in the [issues](https://github.com/FreeLeh/pyfreedb/issues) page!
 
 ## What can I do with these interfaces/abstractions?
 
@@ -43,40 +43,41 @@ The primary target for this library is **small personal projects with low QPS an
 Here are a few ideas we thought of:
 
 1. **A simple personalised expenses tracker.**
-    - A simple mobile app is sufficient. The app is specifically configured and set up just for the author.
-    - Mobile app is not distributed via Google Play Store or Apple App Store.
-    - The expenses can be **tracked using the simple row based database on top of Google Sheets**.
-    - The data can be further manipulated through Google Sheets manually (e.g. summarise it using pivot table).
+
+   - A simple mobile app is sufficient. The app is specifically configured and set up just for the author.
+   - Mobile app is not distributed via Google Play Store or Apple App Store.
+   - The expenses can be **tracked using the simple row based database on top of Google Sheets**.
+   - The data can be further manipulated through Google Sheets manually (e.g. summarise it using pivot table).
 
 2. **A simple home automation controller.**
-    - You may want to build a simple mobile app controlling your Raspberry Pi.
-    - However, you cannot connect to your Raspberry Pi easily (there are tools for it, but it's usually not free).
-    - You can make the mobile app publish an event to Google Sheets and let the Raspberry Pi listen to such events and act accordingly.
+   - You may want to build a simple mobile app controlling your Raspberry Pi.
+   - However, you cannot connect to your Raspberry Pi easily (there are tools for it, but it's usually not free).
+   - You can make the mobile app publish an event to Google Sheets and let the Raspberry Pi listen to such events and act accordingly.
 
 # Table of Contents
 
-* [Installation](#installation)
-* [Key Value Store](#key-value-store)
-    * [Google Sheets Key Value Store](#google-sheets-key-value-store)
-        * [Key Value Store Interface](#key-value-store-interface)
-        * [Key Value Store Modes](#key-value-store-modes)
-            * [Default Mode](#default-mode)
-            * [Append Only Mode](#append-only-mode)
-* [Row Store](#row-store)
-   * [Google Sheets Row Store](#google-sheets-row-store)
-       * [Row Store Interface](#row-store-interface)
-* [Google Credentials](#google-credentials)
-    * [OAuth2 Flow](#oauth2-flow)
-    * [Service Account Flow](#service-account-flow)
-    * [Custom HTTP Client](#custom-http-client)
-* [Limitations](#limitations)
-* [Disclaimer](#disclaimer)
-* [License](#license)
-    
+- [Installation](#installation)
+- [Key Value Store](#key-value-store)
+  - [Google Sheets Key Value Store](#google-sheets-key-value-store)
+    - [Key Value Store Interface](#key-value-store-interface)
+    - [Key Value Store Modes](#key-value-store-modes)
+      - [Default Mode](#default-mode)
+      - [Append Only Mode](#append-only-mode)
+- [Row Store](#row-store)
+  - [Google Sheets Row Store](#google-sheets-row-store)
+    - [Row Store Interface](#row-store-interface)
+- [Google Credentials](#google-credentials)
+  - [OAuth2 Flow](#oauth2-flow)
+  - [Service Account Flow](#service-account-flow)
+  - [Custom HTTP Client](#custom-http-client)
+- [Limitations](#limitations)
+- [Disclaimer](#disclaimer)
+- [License](#license)
+
 # Installation
 
 ```
-pip install pyfreeleh
+pip install pyfreedb
 ```
 
 # Key Value Store
@@ -84,7 +85,7 @@ pip install pyfreeleh
 ## Google Sheets Key Value Store
 
 ```py
-from pyfreeleh.providers.google import auth 
+from pyfreedb.providers.google import auth
 
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -99,7 +100,7 @@ auth_client = auth.OAuth2GoogleAuthClient.from_authorized_user_file(
 )
 
 # Below are the same regardless of the auth client chosen above.
-from pyfreeleh.kv import GoogleSheetKVStore
+from pyfreedb.kv import GoogleSheetKVStore
 kv = GoogleSheetKVStore(
     auth_client,
     spreadsheet_id="<spreadsheet_id>",
@@ -131,7 +132,7 @@ while a `sheet_name` is the Redis database that you can select using the [Redis 
 
 - `get` tries to retrieve the value associated to the given key.
 - If the key exists, this method will return the value.
-- Otherwise, `pyfreeleh.kv.KeyNotFoundError` will be returned.
+- Otherwise, `pyfreedb.kv.KeyNotFoundError` will be returned.
 
 #### `set(key: str, value: bytes) -> None`
 
@@ -146,6 +147,7 @@ while a `sheet_name` is the Redis database that you can select using the [Redis 
 - Otherwise, this method will do nothing.
 
 > ### ⚠️ ⚠️ Warning
+>
 > Please note that only `bytes` values are supported at the moment.
 
 ### Key Value Store Modes
@@ -169,7 +171,7 @@ The default mode works just like a normal key value store. The behaviours are as
 
 ##### `get(key: str) -> bytes`
 
-- Returns `pyfreeleh.kv.KeyNotFoundError` if the key is not in the store.
+- Returns `pyfreedb.kv.KeyNotFoundError` if the key is not in the store.
 - Use a simple `VLOOKUP` formula on top of the data table.
 - Does not support concurrent operations.
 
@@ -204,7 +206,7 @@ The append only mode works by only appending changes to the end of the sheet. Th
 
 ##### `get(key: str) -> bytes`
 
-- Returns `pyfreeleh.kv.KeyNotFoundError` if the key is not in the store.
+- Returns `pyfreedb.kv.KeyNotFoundError` if the key is not in the store.
 - Use a simple `VLOOKUP` with `SORT` (sort the 3rd column, the timestamp) formula on top of the data table.
 - Support concurrent operations as long as the `GoogleSheetKVStore` instance is not shared between threads/coroutines.
 
@@ -236,7 +238,7 @@ Some additional notes to understand the append only mode better:
 ## Google Sheets Row Store
 
 ```py
-from pyfreeleh.providers.google import auth 
+from pyfreedb.providers.google import auth
 
 scopes = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -252,7 +254,7 @@ auth_client = auth.OAuth2GoogleAuthClient.from_authorized_user_file(
 
 
 # Below are the same regardless of the auth client chosen above.
-from pyfreeleh.row import GoogleSheetRowStore
+from pyfreedb.row import GoogleSheetRowStore
 store = GoogleSheetRowStore(
     auth_client,
     spreadsheet_id="<spreadsheet_id>",
@@ -293,19 +295,20 @@ You only need 3 information to get started:
 For all the examples in this section, we assume we have a table of 2 columns: name (column A) and age (column B).
 
 > ### ⚠️ ⚠️ Warning
+>
 > Please note that the row store implementation does not support any ACID guarantee.
 > Concurrency is not a primary consideration and there is no such thing as a "transaction" concept anywhere.
 > Each statement may trigger multiple APIs and those API executions are not atomic in nature.
 
-### `select(*columns: str) -> pyfreeleh.row.gsheet.SelectStmt`
+### `select(*columns: str) -> pyfreedb.row.gsheet.SelectStmt`
 
 - `select` returns a statement to perform the actual select operation. You can think of this operation like the normal SQL select statement (with limitations).
 - If `columns` is an empty list, all columns will be returned.
 - If a column is not found in the provided list of columns that you pass to the initializer, that column will be ignored.
 
-#### `pyfreeleh.row.gsheet.SelectStmt`
+#### `pyfreedb.row.gsheet.SelectStmt`
 
-##### `where(condition: str, *args: Any) -> pyfreeleh.row.gsheet.SelectStmt`
+##### `where(condition: str, *args: Any) -> pyfreedb.row.gsheet.SelectStmt`
 
 - The values in `condition` string must be replaced using a placeholder denoted by `?`.
 - The actual values used for each placeholder (ordering matters) are provided via the `args` parameter.
@@ -320,13 +323,13 @@ Examples:
 store.select().where("name = ? AND age = ?", "bob", 12)
 
 # SELECT * WHERE A like "b%" OR B >= 10
-store.select().where("name like ? OR age >= ?", "b%", 10) 
+store.select().where("name like ? OR age >= ?", "b%", 10)
 ```
 
-##### `order_by(**ordering: pyfreeleh.row.Ordering) -> pyfreeleh.row.gsheet.SelectStmt`
+##### `order_by(**ordering: pyfreedb.row.Ordering) -> pyfreedb.row.gsheet.SelectStmt`
 
 - The `ordering` kwargs decides which column should have what kind of ordering.
-- The library provides 2 ordering constants: `pyfreeleh.row.Ordering.ASC` and `pyfreeleh.row.Ordering.DESC`.
+- The library provides 2 ordering constants: `pyfreedb.row.Ordering.ASC` and `pyfreedb.row.Ordering.DESC`.
 - And empty `ordering` kwargs will result in no operation.
 - This function will translate into the `ORDER BY` clause as stated in this [Google Sheets Query docs](https://developers.google.com/chart/interactive/docs/querylanguage#order-by).
 - This function returns a reference to the statement for chaining.
@@ -342,7 +345,7 @@ store.select().where("name = ? AND age = ?", "bob", 12).order_by(name=Ordering.A
 store.select().order_by(name=Ordering.ASC)
 ```
 
-##### `limit(limit: int) -> pyfreeleh.row.gsheet.SelectStmt`
+##### `limit(limit: int) -> pyfreedb.row.gsheet.SelectStmt`
 
 - This function limits the number of returned rows.
 - This function will translate into the `LIMIT` clause as stated in this [Google Sheets Query docs](https://developers.google.com/chart/interactive/docs/querylanguage#limit).
@@ -355,7 +358,7 @@ Examples:
 store.select().where("name = ? AND age = ?", "bob", 12).limit(10)
 ```
 
-##### `offset(offset: int) -> pyfreeleh.row.gsheet.SelectStmt`
+##### `offset(offset: int) -> pyfreedb.row.gsheet.SelectStmt`
 
 - This function skips a given number of first rows.
 - This function will translate into the `OFFSET` clause as stated in this [Google Sheets Query docs](https://developers.google.com/chart/interactive/docs/querylanguage#offset).
@@ -378,12 +381,12 @@ Examples:
 ```py
 print(store.select().where("name = ? AND age = ?", "bob", 12).excute)
 ```
- 
-### `insert(rows: List[Dict[str, str]]) -> pyfreeleh.row.gsheet.InsertStmt`
+
+### `insert(rows: List[Dict[str, str]]) -> pyfreedb.row.gsheet.InsertStmt`
 
 - `insert` returns a statement to perform the actual insert operation.
 
-#### `pyfreeleh.row.gsheet.InsertStmt`
+#### `pyfreedb.row.gsheet.InsertStmt`
 
 ##### `execute() -> None`
 
@@ -391,33 +394,33 @@ print(store.select().where("name = ? AND age = ?", "bob", 12).excute)
 - This works by appending new rows into Google Sheets.
 - There is only one API call involved in this function.
 
-### `update(updated_value: Dict[str, str]) -> pyfreeleh.row.gsheet.UpdateStmt`
- 
+### `update(updated_value: Dict[str, str]) -> pyfreedb.row.gsheet.UpdateStmt`
+
 - `Update` returns a statement to perform the actual update operation.
 - The `updated_value` dict tells the library which column should be updated to what value.
 - Note that the column in `updated_value` must exist in columns that you've passed during initialisation.
 
-#### `pyfreeleh.row.gsheet.UpdateStmt`
+#### `pyfreedb.row.gsheet.UpdateStmt`
 
-##### `where(condition: str, *args: Any) -> pyfreeleh.row.gsheet.UpdateStmt`
+##### `where(condition: str, *args: Any) -> pyfreedb.row.gsheet.UpdateStmt`
 
-This works exactly the same as the `pyfreeleh.row.gsheet.SelectStmt.where` function. You can refer to the above section for more details.
+This works exactly the same as the `pyfreedb.row.gsheet.SelectStmt.where` function. You can refer to the above section for more details.
 
 ##### `execute() -> int`
 
 - This function will actually execute the `UPDATE` statement.
 - There are two API calls involved: one for figuring out which rows are affected and another for actually updating the values.
 - Returns number of affected rows by the update.
-  
-### `delete() -> pyfreeleh.row.gsheet.DeleteStmt`
+
+### `delete() -> pyfreedb.row.gsheet.DeleteStmt`
 
 - `delete` returns a statement to perform the actual delete operation.
 
-#### `pyfreeleh.row.gsheet.DeleteStmt`
+#### `pyfreedb.row.gsheet.DeleteStmt`
 
-##### `where(condition: str, *args: Any) -> pyfreeleh.row.gsheet.DeleteStmt`
+##### `where(condition: str, *args: Any) -> pyfreedb.row.gsheet.DeleteStmt`
 
-This works exactly the same as the `pyfreeleh.row.gsheet.SelectStmt.where` function. You can refer to the above section for more details.
+This works exactly the same as the `pyfreedb.row.gsheet.SelectStmt.where` function. You can refer to the above section for more details.
 
 ##### `execute() -> int`
 
@@ -470,6 +473,7 @@ auth_client = auth.ServiceAccountGoogleAuthClient.from_service_account_file("<pa
 If you want to understand the details, you can start from this [Google Service Account page](https://developers.google.com/identity/protocols/oauth2/service-account).
 
 > ### ⚠️ ⚠️ Warning
+>
 > Note that a service account is just like an account. The email in the `service_account_json` must be allowed to read/write into the Google Sheet itself just like a normal email address.
 > If you don't do this, you will get an authorization error.
 
@@ -478,7 +482,7 @@ If you want to understand the details, you can start from this [Google Service A
 1. If you want to manually edit the Google Sheet, you can do it, but you need to understand the value encoding scheme.
 2. It is not easy to support concurrent operations. Only few modes or abstractions allow concurrent operations.
 3. Performance is not a high priority for this project.
-4. `PyFreeLeh` does not support OAuth2 flow that spans across frontend and backend yet.
+4. `pyfreedb` does not support OAuth2 flow that spans across frontend and backend yet.
 
 ### (Google Sheets Key Value) Exclamation Mark `!` Prefix
 
@@ -491,14 +495,14 @@ If you want to understand the details, you can start from this [Google Service A
 1. Note that we do not do any type conversion when inserting values into Google cells.
 2. Values are marshalled using JSON internally by the Google Sheets library.
 3. Values are interpreted automatically by the Google Sheet itself (unless you have changed the cell value type intentionally and manually). Let's take a look at some examples.
-    - The literal string value of `"hello"` will automatically resolve into a `string` type for that cell.
-    - The literal integer value of `1` will automatically resolve into a `number` type for that cell.
-    - The literal string value of `"2000-1-1"`, however, will automatically resolve into a `date` type for that cell.
-    - Note that this conversion is automatically done by Google Sheet.
-    - Querying such column will have to consider the automatic type inference for proper querying. You can read here for [more details](https://developers.google.com/chart/interactive/docs/querylanguage#language-elements).
+   - The literal string value of `"hello"` will automatically resolve into a `string` type for that cell.
+   - The literal integer value of `1` will automatically resolve into a `number` type for that cell.
+   - The literal string value of `"2000-1-1"`, however, will automatically resolve into a `date` type for that cell.
+   - Note that this conversion is automatically done by Google Sheet.
+   - Querying such column will have to consider the automatic type inference for proper querying. You can read here for [more details](https://developers.google.com/chart/interactive/docs/querylanguage#language-elements).
 4. It may be possible to build a more type safe system in the future.
-    - For example, we can store the column value type and store everything as strings instead.
-    - During the data retrieval, we can read the column value type and perform explicit conversion.
+   - For example, we can store the column value type and store everything as strings instead.
+   - During the data retrieval, we can read the column value type and perform explicit conversion.
 
 # Disclaimer
 

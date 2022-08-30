@@ -1,5 +1,3 @@
-from gettext import install
-
 from setuptools import find_packages, setup
 
 install_requires = [
@@ -10,8 +8,8 @@ install_requires = [
 ]
 
 setup(
-    name="pyfreeleh",
-    version="0.0.2",
+    name="pyfreedb",
+    version="0.0.1",
     install_requires=install_requires,
     package_dir={"": "src"},
     packages=find_packages(where="src"),

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union
 import requests
 from googleapiclient.discovery import build
 
-from pyfreeleh.providers.google.auth.base import GoogleAuthClient
+from pyfreedb.providers.google.auth.base import GoogleAuthClient
 
 from .base import A1Range, BatchUpdateRowsRequest, InsertRowsResult, UpdateRowsResult
 
@@ -13,6 +13,8 @@ class GoogleSheetWrapper:
     APPEND_MODE_OVERWRITE = "OVERWRITE"
     APPEND_MODE_INSERT = "INSERT_ROWS"
     MAJOR_DIMENSION_ROWS = "ROWS"
+    VALUE_RENDER_FORMATTED_VALUE = "FORMATTED_VALUE"
+    VALUE_INPUT_USER_ENTERED = "USER_ENTERED"
 
     def __init__(self, auth_client: GoogleAuthClient):
         service = build("sheets", "v4", credentials=auth_client.credentials())
@@ -50,8 +52,8 @@ class GoogleSheetWrapper:
                 range=str(a1_range),
                 insertDataOption=mode,
                 includeValuesInResponse="true",
-                responseValueRenderOption="FORMATTED_VALUE",
-                valueInputOption="USER_ENTERED",
+                responseValueRenderOption=self.VALUE_RENDER_FORMATTED_VALUE,
+                valueInputOption=self.VALUE_INPUT_USER_ENTERED,
                 body={"values": values},
             )
             .execute()
@@ -124,7 +126,7 @@ class GoogleSheetWrapper:
 
         return results
 
-    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[Dict[str, str]]:
+    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[List[Any]]:
         auth_token = "Bearer " + self._auth_client.credentials().token
         headers = {"contentType": "application/json", "Authorization": auth_token}
 
@@ -140,7 +142,7 @@ class GoogleSheetWrapper:
         r.raise_for_status()
         return self._convert_query_result(r.text)
 
-    def _convert_query_result(self, response: str) -> List[Dict[str, Any]]:
+    def _convert_query_result(self, response: str) -> List[List[Any]]:
         # Remove the schema header -> freeleh({...}).
         # We only care about the JSON inside of the bracket.
         start, end = response.index("{"), response.rindex("}")
@@ -150,13 +152,13 @@ class GoogleSheetWrapper:
 
         results = []
         for row in rows:
-            result_row = {}
+            result_row = []
             for cell_idx, cell in enumerate(row["c"]):
                 if not cell:
                     continue
 
                 col = cols[cell_idx]
-                result_row[col["id"]] = self._parse_cell(cell, col)
+                result_row.append(self._parse_cell(cell, col))
             results.append(result_row)
         return results
 
@@ -169,14 +171,17 @@ class GoogleSheetWrapper:
         if typ == "boolean":
             return cell["v"]
         elif typ == "number":
-            if "." in cell["f"]:
-                return float(cell["f"])
+            if "f" in cell:
+                if "." in cell["f"]:
+                    return float(cell["f"])
 
-            return int(cell["f"])
+                return int(cell["f"])
+
+            # Computed data doesn't have raw value, number returned from aggregation will doesn't have `f`.
+            return int(cell["v"])
         elif typ == "string":
             return cell["v"]
         elif typ in ["date", "datetime", "timeofday"]:
-            # return datetime.strptime(cell["f"], col["pattern"])
             return cell["f"]
 
         raise ValueError("cell type {} is not supported".format(typ))

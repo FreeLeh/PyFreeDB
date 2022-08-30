@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-pytest . -vx -m "integration"
+coverage run -m pytest . -vx -m "integration"
