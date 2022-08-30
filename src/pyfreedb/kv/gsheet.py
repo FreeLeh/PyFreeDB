@@ -9,6 +9,8 @@ from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
 
 from .base import KeyNotFoundError, KVStore
 
+AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
 
 class GoogleSheetKVStore(KVStore):
     DEFAULT_MODE = 0

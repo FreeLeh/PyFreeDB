@@ -10,6 +10,9 @@ from pyfreedb.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, Upd
 T = TypeVar("T", bound=Model)
 
 
+AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
+
 class GoogleSheetRowStore(Generic[T]):
     RID_COLUMN_NAME = "_rid"
     WHERE_DEFAULT_CLAUSE = f"{RID_COLUMN_NAME} IS NOT NULL"
@@ -54,7 +57,7 @@ class GoogleSheetRowStore(Generic[T]):
 
         column_headers = [self.RID_COLUMN_NAME]
         for field in self._object_cls._fields.values():
-            column_headers.append(field._header_name)
+            column_headers.append(field._column_name)
 
         self._wrapper.update_rows(self._spreadsheet_id, A1Range(self._sheet_name), [column_headers])
 
