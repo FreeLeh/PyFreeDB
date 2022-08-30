@@ -13,17 +13,17 @@ T = TypeVar("T")
 
 class Field(Generic[T]):
     _typ: Type[T]
-    _header_name: str
+    _column_name: str
     _field_name: str
 
-    def __init__(self, header_name: str = "") -> None:
-        self._header_name = header_name
+    def __init__(self, column_name: str = "") -> None:
+        self._column_name = column_name
 
     def __set_name__(self, _: Any, name: str) -> None:
         self._field_name = name
 
-        if self._header_name == "":
-            self._header_name = name
+        if self._column_name == "":
+            self._column_name = name
 
     def __get__(self, obj: Any, _: Any) -> Optional[T]:
         value = getattr(obj._data, self._field_name)

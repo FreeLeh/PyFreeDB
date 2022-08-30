@@ -165,7 +165,7 @@ store.delete().where("name = ? OR age >= ?", "freedb", 10).execute()
 
 ### Model Field to Column Mapping
 
-You can pass keyword argument `header_name` to the `Field` constructor when defining the models to change the column
+You can pass keyword argument `column_name` to the `Field` constructor when defining the models to change the column
 name in the sheet. Without this keyword argument, the library will use the field name as the column name (case
 sensitive).
 
@@ -177,8 +177,8 @@ class Person(models.Model):
 
 # This will map to the exact column name of "Name" and "Age".
 class Person(models.Model):
-    name = models.StringField(header_name="Name")
-    age = models.IntegerField(header_name="Age")
+    name = models.StringField(column_name="Name")
+    age = models.IntegerField(column_name="Age")
 ```
 
 ## KV Store
@@ -202,7 +202,7 @@ auth_client = OAuth2GoogleAuthClient.from_authorized_user_file(
 
 store = GoogleSheetKVStore(
     auth_client,
-	spreadsheet_id="<spreadsheet_id>",
+    spreadsheet_id="<spreadsheet_id>",
     sheet_name="<sheet_name>",
     mode=GoogleSheetKVStore.APPEND_ONLY_MODE,
 )
@@ -241,7 +241,7 @@ There are 2 different modes supported:
 // Default mode
 store = GoogleSheetKVStore(
     auth_client,
-	spreadsheet_id="<spreadsheet_id>",
+    spreadsheet_id="<spreadsheet_id>",
     sheet_name="<sheet_name>",
     mode=GoogleSheetKVStore.DEFAULT_MODE,
 )
@@ -249,7 +249,7 @@ store = GoogleSheetKVStore(
 // Append only mode
 store = GoogleSheetKVStore(
     auth_client,
-	spreadsheet_id="<spreadsheet_id>",
+    spreadsheet_id="<spreadsheet_id>",
     sheet_name="<sheet_name>",
     mode=GoogleSheetKVStore.APPEND_ONLY_MODE,
 )
