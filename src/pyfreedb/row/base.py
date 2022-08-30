@@ -4,6 +4,14 @@ class Ordering:
 
     @classmethod
     def ASC(cls, field_name: str) -> "Ordering":
+        """Specify column ordering of the query result in ascending order.
+
+        Args:
+            field_name: the column name.
+
+        Returns:
+            Ordering: the column order object.
+        """
         obj = cls()
         obj._field_name = field_name
         obj._value = "ASC"
@@ -11,6 +19,14 @@ class Ordering:
 
     @classmethod
     def DESC(cls, field_name: str) -> "Ordering":
+        """Specify column ordering of the query result in descending order.
+
+        Args:
+            field_name: the column name.
+
+        Returns:
+            Ordering: the column order object.
+        """
         obj = cls()
         obj._field_name = field_name
         obj._value = "DESC"
