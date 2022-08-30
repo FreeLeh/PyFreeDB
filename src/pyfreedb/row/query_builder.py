@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 
 from pyfreedb.providers.google.sheet.base import A1CellSelector
 
-from .base import Ordering, InvalidQuery
+from .base import InvalidQuery, Ordering
 from .models import Model
 
 
