@@ -37,3 +37,7 @@ class Ordering:
         obj._field_name = self._field_name
         obj._value = self._value
         return obj
+
+
+class InvalidQuery(Exception):
+    pass

@@ -2,12 +2,8 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 
 from pyfreedb.providers.google.sheet.base import A1CellSelector
 
-from .base import Ordering
+from .base import Ordering, InvalidQuery
 from .models import Model
-
-
-class InvalidQuery(Exception):
-    pass
 
 
 class ColumnReplacer:
