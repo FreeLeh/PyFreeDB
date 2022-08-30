@@ -98,7 +98,7 @@ auth_client = OAuth2GoogleAuthClient.from_authorized_user_file(
 )
 
 store = GoogleSheetRowStore(
-    config.auth_client,
+    auth_client,
     spreadsheet_id="<spreadsheet_id>",
     sheet_name="<sheet_name>",
     object_cls=Person,
