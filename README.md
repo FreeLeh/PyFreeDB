@@ -43,7 +43,7 @@
   - [Inserting Rows](#inserting-rows)
   - [Updating Rows](#updating-rows)
   - [Deleting Rows](#deleting-rows)
-  - [Struct Field to Column Mapping](#struct-field-to-column-mapping)
+  - [Model Field to Column Mapping](#model-field-to-column-mapping)
 - [KV Store](#kv-store)
   - [Get Value](#get-value)
   - [Set Key](#set-key)
@@ -164,7 +164,7 @@ store.delete().execute()
 store.delete().where("name = ? OR age >= ?", "freedb", 10).execute()
 ```
 
-### Struct Field to Column Mapping
+### Model Field to Column Mapping
 
 You can pass keyword argument `header_name` to the `Field` constructor when defining the models to change the column
 name in the sheet. Without this keyword argument, the library will use the field name as the column name (case
