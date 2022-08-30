@@ -1,5 +1,5 @@
 from typing import List
 
-from .gsheet import GoogleSheetKVStore
+from .gsheet import AUTH_SCOPES, GoogleSheetKVStore
 
-__all__: List[str] = ["GoogleSheetKVStore", "KeyNotFounderror"]
+__all__: List[str] = ["GoogleSheetKVStore", "KeyNotFounderror", "AUTH_SCOPES"]

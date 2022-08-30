@@ -10,6 +10,9 @@ from pyfreedb.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, Upd
 T = TypeVar("T", bound=Model)
 
 
+AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
+
 class GoogleSheetRowStore(Generic[T]):
     RID_COLUMN_NAME = "_rid"
     WHERE_DEFAULT_CLAUSE = f"{RID_COLUMN_NAME} IS NOT NULL"

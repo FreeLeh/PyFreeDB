@@ -81,22 +81,21 @@ class Person(models.Model):
 ```
 
 ```py
-from pyfreedb.providers.google.auth import ServiceAccountGoogleAuthClient, OAuth2GoogleAuthClient, Scopes
+from pyfreedb.providers.google.auth import ServiceAccountGoogleAuthClient, OAuth2GoogleAuthClient
+from pyfreedb.row import GoogleSheetRowStore, AUTH_SCOPES
 
 # If using Google Service Account.
 auth_client = ServiceAccountGoogleAuthClient.from_service_account_file(
     "<path_to_service_account_json>",
-    scopes=Scopes.ROW_STORE,
+    scopes=AUTH_SCOPES,
 )
 
 # If using Google OAuth2 Flow.
 auth_client = OAuth2GoogleAuthClient.from_authorized_user_file(
     "<path_to_cached_credentials_json>",
     client_secret_filename="<path_to_client_secret_json>",
-    scopes=Scopes.ROW_STORE,
+    scopes=AUTH_SCOPES,
 )
-
-from pyfreedb.row import GoogleSheetRowStore
 
 store = GoogleSheetRowStore(
     config.auth_client,
@@ -185,19 +184,20 @@ class Person(models.Model):
 ## KV Store
 
 ```py
-from pyfreedb.providers.google.auth import ServiceAccountGoogleAuthClient, OAuth2GoogleAuthClient, Scopes
+from pyfreedb.providers.google.auth import ServiceAccountGoogleAuthClient, OAuth2GoogleAuthClient
+from pyfreedb.kv import GoogleSheetKVStore, AUTH_SCOPES
 
 # If using Google Service Account.
 auth_client = ServiceAccountGoogleAuthClient.from_service_account_file(
     "<path_to_service_account_json>",
-    scopes=Scopes.KV_STORE,
+    scopes=AUTH_SCOPES,
 )
 
 # If using Google OAuth2 Flow.
 auth_client = OAuth2GoogleAuthClient.from_authorized_user_file(
     "<path_to_cached_credentials_json>",
     client_secret_filename="<path_to_client_secret_json>",
-    scopes=Scopes.KV_STORE,
+    scopes=AUTH_SCOPES,
 )
 
 store = GoogleSheetKVStore(
@@ -210,7 +210,7 @@ store = GoogleSheetKVStore(
 
 ### Get Value
 
-If the key is not found, `pyfreedb.kv.base.KeyNotFoundError` will be returned.
+If the key is not found, `pyfreedb.kv.KeyNotFoundError` will be returned.
 
 ```go
 store.get("k1")
