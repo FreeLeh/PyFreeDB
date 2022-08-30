@@ -46,6 +46,11 @@ class CountStmt(Generic[T]):
         """
         query = self._query.build_select([f"COUNT({self._store.RID_COLUMN_NAME})"])
         rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+
+        # If the spreadsheet is empty, GViz will return empty rows instead.
+        if len(rows) == 0:
+            return 0
+
         return int(rows[0][0])
 
 

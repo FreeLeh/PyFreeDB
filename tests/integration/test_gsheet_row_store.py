@@ -19,10 +19,11 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
         sheet_name="row_store",
         object_cls=Customer,
     )
-
     # Sheet is empty, expects empty list.
     result = row_store.select("name", "age").execute()
     assert result == []
+
+    assert 0 == row_store.count().execute()
 
     # Insert some data, expects no exception raised.
     rows = [
