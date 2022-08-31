@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
+set -eux
 
-pip install -r requirements.txt
-pip install -r dev_requirements.txt
-pip install -e .
+pip install flit
+flit install --symlink
