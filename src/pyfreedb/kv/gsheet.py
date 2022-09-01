@@ -4,20 +4,26 @@ from typing import Any, Callable, List
 from pyfreedb.base import Codec, InvalidOperationError
 from pyfreedb.codec import BasicCodec
 from pyfreedb.providers.google.auth.base import GoogleAuthClient
-from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range
-from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreedb.providers.google.sheet.base import _A1CellSelector, _A1Range
+from pyfreedb.providers.google.sheet.wrapper import _GoogleSheetWrapper
 
-from .base import KeyNotFoundError, KVStore
+from .base import KeyNotFoundError
 
 AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
-class GoogleSheetKVStore(KVStore):
+class GoogleSheetKVStore:
+    """This class implements the FreeDB KV store protocol."""
+
     DEFAULT_MODE = 0
+    """Use the KV Store with the default mode."""
+
     APPEND_ONLY_MODE = 1
-    SCRATCHPAD_SUFFIX = "_scratch"
-    SCRATCHPAD_BOOKED_VALUE = "BOOKED"
-    NA_VALUE = "#N/A"
+    """Use the KV Store with the append only mode."""
+
+    _SCRATCHPAD_SUFFIX = "_scratch"
+    _SCRATCHPAD_BOOKED_VALUE = "BOOKED"
+    _NA_VALUE = "#N/A"
 
     def __init__(
         self,
@@ -32,21 +38,21 @@ class GoogleSheetKVStore(KVStore):
         During initialisation, the store will create the sheet if `sheet_name` doesn't exists inside the spreadsheet.
 
         Args:
-            auth_client: the credential that we're going to use to call the Google Sheet APIs.
-            spreadsheet_id: the spreadsheet id that we're going to operate on.
-            sheet_name: the sheet name that we're going to operate on.
-            codec: the codec that will be used to serialize/deserialize the value.
-            mode: the KV storage strategy.
+            auth_client: The credential that we're going to use to call the Google Sheet APIs.
+            spreadsheet_id: The spreadsheet id that we're going to operate on.
+            sheet_name: The sheet name that we're going to operate on.
+            codec: The codec that will be used to serialize/deserialize the value.
+            mode: The KV storage strategy.
         """
 
         self._auth_client = auth_client
         self._spreadsheet_id = spreadsheet_id
-        self._scratchpad_name = sheet_name + self.SCRATCHPAD_SUFFIX
+        self._scratchpad_name = sheet_name + self._SCRATCHPAD_SUFFIX
         self._sheet_name = sheet_name
         self._codec: Codec = codec
         self._mode = mode
 
-        self._wrapper = GoogleSheetWrapper(auth_client)
+        self._wrapper = _GoogleSheetWrapper(auth_client)
         self._ensure_sheet()
         self._book_scratchpad_cell()
         self._closed = False
@@ -65,8 +71,8 @@ class GoogleSheetKVStore(KVStore):
     def _book_scratchpad_cell(self) -> None:
         result = self._wrapper.overwrite_rows(
             self._spreadsheet_id,
-            A1Range.from_notation(self._scratchpad_name),
-            [[self.SCRATCHPAD_BOOKED_VALUE]],
+            _A1Range.from_notation(self._scratchpad_name),
+            [[self._SCRATCHPAD_BOOKED_VALUE]],
         )
 
         self._scratchpad_cell = result.updated_range
@@ -75,12 +81,13 @@ class GoogleSheetKVStore(KVStore):
         """Returns the value associated with the given `key`.
 
         Args:
-            key: the key of the item that we want to get.
+            key: The key of the item that we want to get.
 
         Returns:
-            bytes: the value associated by the given key.
+            bytes: The value associated by the given key.
 
-            Will raise KeyNotFoundError if the key doesn't exists.
+        Raises:
+            KeyNotFoundError: An error when the key doesn't exists.
         """
         self._ensure_initialised()
 
@@ -105,8 +112,8 @@ class GoogleSheetKVStore(KVStore):
         """Set the value of entry associated with the given `key` with the given`value`.
 
         Args:
-            key: the key of the entry that we want to set.
-            value: the value that we want to store.
+            key: The key of the entry that we want to set.
+            value: The value that we want to store.
         """
         self._ensure_initialised()
 
@@ -131,25 +138,25 @@ class GoogleSheetKVStore(KVStore):
             self._wrapper.update_rows(self._spreadsheet_id, key_range, [[key, data, ts]])
         except KeyNotFoundError:
             self._wrapper.overwrite_rows(
-                self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]]
+                self._spreadsheet_id, _A1Range.from_notation(self._sheet_name), [[key, data, ts]]
             )
 
-    def _find_key_a1range(self, key: str) -> A1Range:
+    def _find_key_a1range(self, key: str) -> _A1Range:
         formula = '=MATCH("{key}", {sheet_name}!A:A, 0)'.format(key=key, sheet_name=self._sheet_name)
         resp = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
 
         row_idx = self._ensure_values(resp.updated_values)
-        return A1Range(self._sheet_name, A1CellSelector(row=row_idx), A1CellSelector(row=row_idx))
+        return _A1Range(self._sheet_name, _A1CellSelector(row=row_idx), _A1CellSelector(row=row_idx))
 
     def _append_only_set(self, key: str, data: str, ts: int) -> None:
-        self._wrapper.insert_rows(self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]])
+        self._wrapper.insert_rows(self._spreadsheet_id, _A1Range.from_notation(self._sheet_name), [[key, data, ts]])
 
     def _ensure_values(self, values: List[List[Any]]) -> Any:
         if not values:
             raise KeyNotFoundError
 
         value = values[0][0]
-        if not value or value == self.NA_VALUE:
+        if not value or value == self._NA_VALUE:
             raise KeyNotFoundError
 
         return value
@@ -158,7 +165,7 @@ class GoogleSheetKVStore(KVStore):
         """Delete the entry associated with the given `key`.
 
         Args:
-            key: the key of the entry that we want to delete.
+            key: The key of the entry that we want to delete.
         """
         self._ensure_initialised()
 

@@ -6,10 +6,10 @@ from googleapiclient.discovery import build
 
 from pyfreedb.providers.google.auth.base import GoogleAuthClient
 
-from .base import A1Range, BatchUpdateRowsRequest, InsertRowsResult, UpdateRowsResult
+from .base import _A1Range, _BatchUpdateRowsRequest, _InsertRowsResult, _UpdateRowsResult
 
 
-class GoogleSheetWrapper:
+class _GoogleSheetWrapper:
     APPEND_MODE_OVERWRITE = "OVERWRITE"
     APPEND_MODE_INSERT = "INSERT_ROWS"
     MAJOR_DIMENSION_ROWS = "ROWS"
@@ -36,15 +36,15 @@ class GoogleSheetWrapper:
             spreadsheetId=spreadsheet_id, body={"requests": {"deleteSheet": {"sheetId": sheet_id}}}
         ).execute()
 
-    def insert_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
+    def insert_rows(self, spreadsheet_id: str, range: _A1Range, values: List[List[Any]]) -> _InsertRowsResult:
         return self._insert_rows(spreadsheet_id, range, values, self.APPEND_MODE_INSERT)
 
-    def overwrite_rows(self, spreadsheet_id: str, range: A1Range, values: List[List[Any]]) -> InsertRowsResult:
+    def overwrite_rows(self, spreadsheet_id: str, range: _A1Range, values: List[List[Any]]) -> _InsertRowsResult:
         return self._insert_rows(spreadsheet_id, range, values, self.APPEND_MODE_OVERWRITE)
 
     def _insert_rows(
-        self, spreadsheet_id: str, a1_range: A1Range, values: List[List[Any]], mode: str
-    ) -> InsertRowsResult:
+        self, spreadsheet_id: str, a1_range: _A1Range, values: List[List[Any]], mode: str
+    ) -> _InsertRowsResult:
         resp = (
             self._svc.values()
             .append(
@@ -59,18 +59,18 @@ class GoogleSheetWrapper:
             .execute()
         )
 
-        return InsertRowsResult(
-            updated_range=A1Range.from_notation(resp["updates"]["updatedData"]["range"]),
+        return _InsertRowsResult(
+            updated_range=_A1Range.from_notation(resp["updates"]["updatedData"]["range"]),
             updated_rows=resp["updates"]["updatedRows"],
             updated_columns=resp["updates"]["updatedColumns"],
             updated_cells=resp["updates"]["updatedCells"],
             inserted_values=resp["updates"]["updatedData"]["values"],
         )
 
-    def clear(self, spreadsheet_id: str, ranges: List[A1Range]) -> None:
+    def clear(self, spreadsheet_id: str, ranges: List[_A1Range]) -> None:
         self._svc.values().batchClear(spreadsheetId=spreadsheet_id, body={"ranges": [str(r) for r in ranges]}).execute()
 
-    def update_rows(self, spreadsheet_id: str, a1_range: A1Range, values: List[List[Any]]) -> UpdateRowsResult:
+    def update_rows(self, spreadsheet_id: str, a1_range: _A1Range, values: List[List[Any]]) -> _UpdateRowsResult:
         resp = (
             self._svc.values().update(
                 spreadsheetId=spreadsheet_id,
@@ -82,15 +82,17 @@ class GoogleSheetWrapper:
             )
         ).execute()
 
-        return UpdateRowsResult(
-            updated_range=A1Range.from_notation(resp["updatedRange"]),
+        return _UpdateRowsResult(
+            updated_range=_A1Range.from_notation(resp["updatedRange"]),
             updated_rows=resp["updatedRows"],
             updated_columns=resp["updatedColumns"],
             updated_cells=resp["updatedCells"],
             updated_values=resp["updatedData"].get("values", []),
         )
 
-    def batch_update_rows(self, spreadsheet_id: str, requests: List[BatchUpdateRowsRequest]) -> List[UpdateRowsResult]:
+    def batch_update_rows(
+        self, spreadsheet_id: str, requests: List[_BatchUpdateRowsRequest]
+    ) -> List[_UpdateRowsResult]:
         resp = (
             self._svc.values()
             .batchUpdate(
@@ -115,8 +117,8 @@ class GoogleSheetWrapper:
         results = []
         for response in resp["responses"]:
             results.append(
-                UpdateRowsResult(
-                    updated_range=A1Range.from_notation(response["updatedRange"]),
+                _UpdateRowsResult(
+                    updated_range=_A1Range.from_notation(response["updatedRange"]),
                     updated_rows=response["updatedRows"],
                     updated_columns=response["updatedColumns"],
                     updated_cells=response["updatedCells"],

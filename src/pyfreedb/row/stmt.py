@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, Generic, List, TypeVar
 
-from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range, BatchUpdateRowsRequest
+from pyfreedb.providers.google.sheet.base import _A1CellSelector, _A1Range, _BatchUpdateRowsRequest
 from pyfreedb.row.base import Ordering
 from pyfreedb.row.models import Model
 
@@ -12,6 +12,11 @@ T = TypeVar("T", bound=Model)
 
 class CountStmt(Generic[T]):
     def __init__(self, store: "GoogleSheetRowStore[T]"):
+        """Initialise statement for counting rows.
+
+        Client should not instantiate this class directly, instead use `store.count()` to instantiate it.
+        """
+
         self._store = store
         self._query = store._new_query_builder()
 
@@ -23,28 +28,28 @@ class CountStmt(Generic[T]):
         based on their appearance order.
 
         Args:
-            condition: conditions of the data that we're going to get.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            CountStmt: the count statement with the given WHERE condition applied.
+            CountStmt: The count statement with the given WHERE condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the select statement:
 
-            >> store.count().where("age > ?", 10).execute()
+            >>> store.count().where("age > ?", 10).execute()
             10
         """
-        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
+        self._query.where(f"{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def execute(self) -> int:
         """Execute the count statement.
 
         Returns:
-            int: number of rows that matched with the given condition.
+            int: Number of rows that matched with the given condition.
         """
-        query = self._query.build_select([f"COUNT({self._store.RID_COLUMN_NAME})"])
+        query = self._query.build_select([f"COUNT({self._store._RID_COLUMN_NAME})"])
         rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
 
         # If the spreadsheet is empty, GViz will return empty rows instead.
@@ -56,6 +61,10 @@ class CountStmt(Generic[T]):
 
 class SelectStmt(Generic[T]):
     def __init__(self, store: "GoogleSheetRowStore[T]", selected_columns: List[str]):
+        """Initialise statement for selecting rows.
+
+        Client should not instantiate this class directly, instead use `store.select(...)` to instantiate it.
+        """
         self._store = store
         self._selected_columns = selected_columns
         self._query = store._new_query_builder()
@@ -68,11 +77,11 @@ class SelectStmt(Generic[T]):
         based on their appearance ordering.
 
         Args:
-            condition: conditions of the data that we're going to get.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            SelectStmt: the select statement with the given WHERE condition applied.
+            SelectStmt: The select statement with the given WHERE condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the select statement:
@@ -80,17 +89,17 @@ class SelectStmt(Generic[T]):
             >> len(store.select().where("age > ?", 10).execute())
             10
         """
-        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
+        self._query.where(f"{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def limit(self, limit: int) -> "SelectStmt[T]":
         """Defines the maximum number of rows that we're going to return.
 
         Args:
-            limit: limit that we want to apply.
+            limit: Limit that we want to apply.
 
         Returns:
-            SelectStatement: select statement with the limit applied.
+            SelectStatement: Select statement with the limit applied.
         """
         self._query.limit(limit)
         return self
@@ -99,10 +108,10 @@ class SelectStmt(Generic[T]):
         """Defines the offset of the returned rows.
 
         Args:
-            offset: offset that we want to apply.
+            offset: Offset that we want to apply.
 
         Returns:
-            SelectStatement: select statement with the offset applied.
+            SelectStatement: Select statement with the offset applied.
         """
         self._query.offset(offset)
         return self
@@ -111,10 +120,10 @@ class SelectStmt(Generic[T]):
         """Defines the column ordering of the returned rows.
 
         Args:
-            *orderings: the column ordering that we want to apply.
+            *orderings: The column ordering that we want to apply.
 
         Returns:
-            SelectStatement: select statement with the column ordering applied.
+            SelectStmt: Select statement with the column ordering applied.
         """
         self._query.order_by(*orderings)
         return self
@@ -123,7 +132,7 @@ class SelectStmt(Generic[T]):
         """Execute the select statement.
 
         Returns:
-            list: list of rows that matched the given condition.
+            list: List of rows that matched the given condition.
         """
         query = self._query.build_select(self._selected_columns)
         rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
@@ -141,6 +150,10 @@ class SelectStmt(Generic[T]):
 
 class InsertStmt(Generic[T]):
     def __init__(self, store: "GoogleSheetRowStore[T]", rows: List[T]):
+        """Initialise statement for inserting rows.
+
+        Client should not instantiate this class directly, instead use `store.insert(...)` to instantiate it.
+        """
         self._store = store
         self._rows = rows
 
@@ -159,7 +172,7 @@ class InsertStmt(Generic[T]):
         """
         self._store._wrapper.overwrite_rows(
             self._store._spreadsheet_id,
-            A1Range.from_notation(self._store._sheet_name),
+            _A1Range.from_notation(self._store._sheet_name),
             self._get_raw_values(),
         )
 
@@ -180,6 +193,10 @@ class InsertStmt(Generic[T]):
 
 class UpdateStmt(Generic[T]):
     def __init__(self, store: "GoogleSheetRowStore[T]", update_values: Dict[str, str]):
+        """Initialise statement for updating rows.
+
+        Client should not instantiate this class directly, instead use `store.update()` to instantiate it.
+        """
         self._store = store
         self._update_values = update_values
         self._query = store._new_query_builder()
@@ -192,11 +209,11 @@ class UpdateStmt(Generic[T]):
         based on their appearance ordering.
 
         Args:
-            condition: conditions of the data that we're going to update.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to update.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            UpdateStmt: the delete statement with the given WHERE condition applied.
+            UpdateStmt: The delete statement with the given WHERE condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the update statement:
@@ -204,16 +221,16 @@ class UpdateStmt(Generic[T]):
             >> store.update({"name": "cat"}).where("age > ?", 10).execute()
             10
         """
-        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
+        self._query.where(f"{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def execute(self) -> int:
         """Execute the update statement.
 
         Returns:
-            int: the number of updated rows.
+            int: The number of updated rows.
         """
-        query = self._query.build_select([self._store.RID_COLUMN_NAME])
+        query = self._query.build_select([self._store._RID_COLUMN_NAME])
         affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
         update_candidate_indices = [int(row[0]) for row in affected_rows]
 
@@ -228,15 +245,20 @@ class UpdateStmt(Generic[T]):
                 if col not in self._update_values:
                     continue
 
-                cell_selector = A1CellSelector.from_rc(col_idx + 2, row_idx)
-                update_range = A1Range(self._store._sheet_name, cell_selector, cell_selector)
-                requests.append(BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
+                cell_selector = _A1CellSelector.from_rc(col_idx + 2, row_idx)
+                update_range = _A1Range(self._store._sheet_name, cell_selector, cell_selector)
+                requests.append(_BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
 
         self._store._wrapper.batch_update_rows(self._store._spreadsheet_id, requests)
 
 
 class DeleteStmt(Generic[T]):
     def __init__(self, store: "GoogleSheetRowStore[T]"):
+        """Initialise statement for deleting rows.
+
+        Client should not instantiate this class directly, instead use `store.delete()` to instantiate it.
+        """
+
         self._store = store
         self._query = store._new_query_builder()
 
@@ -248,11 +270,11 @@ class DeleteStmt(Generic[T]):
         based on their appearance ordering.
 
         Args:
-            condition: conditions of the data that we're going to delete.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to delete.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            DeleteStmt: the delete statement with the given where condition applied.
+            DeleteStmt: The delete statement with the given where condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the delete statement:
@@ -260,16 +282,16 @@ class DeleteStmt(Generic[T]):
             >> store.delete().where("age > ?", 10).execute()
             10
         """
-        self._query.where(f"{self._store.WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
+        self._query.where(f"{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}", *args)
         return self
 
     def execute(self) -> int:
         """Execute the delete statement.
 
         Returns:
-            int: number of rows deleted.
+            int: Number of rows deleted.
         """
-        query = self._query.build_select([self._store.RID_COLUMN_NAME])
+        query = self._query.build_select([self._store._RID_COLUMN_NAME])
         affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
         affected_row_indices = [int(row[0]) for row in affected_rows]
 
@@ -279,7 +301,15 @@ class DeleteStmt(Generic[T]):
     def _delete_rows(self, indices: List[int]) -> None:
         requests = []
         for row_idx in indices:
-            row_selector = A1CellSelector.from_rc(row=row_idx)
-            requests.append(A1Range(self._store._sheet_name, start=row_selector, end=row_selector))
+            row_selector = _A1CellSelector.from_rc(row=row_idx)
+            requests.append(_A1Range(self._store._sheet_name, start=row_selector, end=row_selector))
 
         self._store._wrapper.clear(self._store._spreadsheet_id, requests)
+
+
+__pdoc__ = {}
+__pdoc__["CountStmt"] = CountStmt.__init__.__doc__
+__pdoc__["SelectStmt"] = SelectStmt.__init__.__doc__
+__pdoc__["InsertStmt"] = InsertStmt.__init__.__doc__
+__pdoc__["DeleteStmt"] = DeleteStmt.__init__.__doc__
+__pdoc__["UpdateStmt"] = UpdateStmt.__init__.__doc__

@@ -1,17 +1,22 @@
 import dataclasses
-import inspect
 from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union, cast
 
 
-# To differentiate between fields that are not set and Null
 class NotSet:
-    pass
+    """A dummy class to differentiate between fields that are not set and None.
+
+    >>> model_obj = store.select("name").excute()[0]
+    >>> model_obj.name is NotSet
+    False
+    >>> model_obj.age is NotSet
+    True
+    """
 
 
 T = TypeVar("T")
 
 
-class Field(Generic[T]):
+class _Field(Generic[T]):
     _typ: Type[T]
     _column_name: str
     _field_name: str
@@ -41,24 +46,32 @@ class Field(Generic[T]):
             raise TypeError(f"value of field {self._field_name} has the wrong type")
 
 
-class IntegerField(Field[int]):
+class IntegerField(_Field[int]):
+    """A field for integer number values."""
+
     _typ = int
 
 
-class FloatField(Field[float]):
+class FloatField(_Field[float]):
+    """A field for storing floating point number values."""
+
     _typ = float
 
 
-class BoolField(Field[bool]):
+class BoolField(_Field[bool]):
+    """A field for storing boolean values."""
+
     _typ = bool
 
 
-class StringField(Field[str]):
+class StringField(_Field[str]):
+    """A field for storing string values."""
+
     _typ = str
 
 
-class meta(type):
-    def __new__(cls, name: str, bases: Any, dct: Any) -> "meta":
+class _Meta(type):
+    def __new__(cls, name: str, bases: Any, dct: Any) -> "_Meta":
         new_cls = super().__new__(cls, name, bases, dct)
 
         # In python3.7 dict ordering is guaranteed based on the insert time.
@@ -70,7 +83,7 @@ class meta(type):
                 pass
 
         for field_name, value in dct.items():
-            if not isinstance(value, Field):
+            if not isinstance(value, _Field):
                 continue
 
             fields[field_name] = value
@@ -102,14 +115,26 @@ class meta(type):
         setattr(new_cls, "__repr__", repr)
         setattr(new_cls, "__eq__", eq)
 
-        new_cls.__doc__ = data_cls.__name__ + str(inspect.signature(data_cls)).replace(" -> None", "")
         return new_cls
 
 
-class Model(metaclass=meta):
+class Model(metaclass=_Meta):
+    """Base class of model class to be used by GoogleSheetRowStore.
+
+    Client should not use this class directly, inherit this class to define your own model instead.
+
+    >>> class Person(Model):
+    ...     name = StringField()
+    ...     age = IntegerField()
+    """
+
     _fields: Dict[str, Union[IntegerField, FloatField, BoolField, StringField]]
 
     def _validate_type(self) -> None:
         for field in self._fields:
             # Trigger the validation by reassigning the value to itself.
             setattr(self, field, getattr(self, field))
+
+
+__pydoc__ = {}
+__pydoc__["StringField"] = StringField.__doc__

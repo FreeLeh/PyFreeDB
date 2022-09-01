@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Tuple, Type
 
-from pyfreedb.providers.google.sheet.base import A1CellSelector
+from pyfreedb.providers.google.sheet.base import _A1CellSelector
 
 from .base import InvalidQuery, Ordering
 from .models import Model
 
 
-class ColumnReplacer:
+class _ColumnReplacer:
     def __init__(self, rid_column_name: str, model: Type[Model]):
         self._rid_column_name = rid_column_name
         self._replace_map = self._get_col_name_mapping(model)
@@ -14,7 +14,7 @@ class ColumnReplacer:
     def _get_col_name_mapping(self, model: Type[Model]) -> Dict[str, str]:
         result = {self._rid_column_name: "A"}
         for idx, field in enumerate(model._fields.values()):
-            result[field._field_name] = str(A1CellSelector.from_rc(column=idx + 2))
+            result[field._field_name] = str(_A1CellSelector.from_rc(column=idx + 2))
         return result
 
     def replace(self, value: str) -> str:
@@ -24,15 +24,15 @@ class ColumnReplacer:
         return value
 
 
-class GoogleSheetQueryBuilder:
-    def __init__(self, replacer: ColumnReplacer) -> None:
+class _GoogleSheetQueryBuilder:
+    def __init__(self, replacer: _ColumnReplacer) -> None:
         self._where: Optional[Tuple[str, Tuple[Any, ...]]] = None
         self._orderings: List[Ordering] = []
         self._limit: int = 0
         self._offset: int = 0
         self._replacer = replacer
 
-    def where(self, condition: str, *args: Any) -> "GoogleSheetQueryBuilder":
+    def where(self, condition: str, *args: Any) -> "_GoogleSheetQueryBuilder":
         self._validate_where(condition, args)
         self._where = (condition, args)
         return self
@@ -62,7 +62,7 @@ class GoogleSheetQueryBuilder:
 
         return arg
 
-    def order_by(self, *args: Ordering) -> "GoogleSheetQueryBuilder":
+    def order_by(self, *args: Ordering) -> "_GoogleSheetQueryBuilder":
         for order in args:
             self._orderings.append(order)
 
@@ -78,7 +78,7 @@ class GoogleSheetQueryBuilder:
 
         return "ORDER BY " + ", ".join(parts)
 
-    def limit(self, limit: int) -> "GoogleSheetQueryBuilder":
+    def limit(self, limit: int) -> "_GoogleSheetQueryBuilder":
         self._validate_limit(limit)
         self._limit = limit
         return self
@@ -93,7 +93,7 @@ class GoogleSheetQueryBuilder:
 
         return "LIMIT {}".format(self._limit)
 
-    def offset(self, offset: int) -> "GoogleSheetQueryBuilder":
+    def offset(self, offset: int) -> "_GoogleSheetQueryBuilder":
         self._validate_offset(offset)
         self._offset = offset
         return self

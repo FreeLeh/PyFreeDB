@@ -1,6 +1,6 @@
 from pyfreedb.row import models
 from pyfreedb.row.base import Ordering
-from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
+from pyfreedb.row.query_builder import _ColumnReplacer, _GoogleSheetQueryBuilder
 
 
 class DummyReplacer:
@@ -15,7 +15,7 @@ class DummyModel(models.Model):
 
 def test_replacer() -> None:
     # Get the basics right.
-    replacer = ColumnReplacer("_rid", DummyModel)
+    replacer = _ColumnReplacer("_rid", DummyModel)
     assert replacer.replace("_rid") == "A"
     assert replacer.replace("field1") == "B"
     assert replacer.replace("field2") == "C"
@@ -25,8 +25,8 @@ def test_replacer() -> None:
 
 
 def test_query_builder_mapping() -> None:
-    replacer = ColumnReplacer("_rid", DummyModel)
-    query_builder = GoogleSheetQueryBuilder(replacer)
+    replacer = _ColumnReplacer("_rid", DummyModel)
+    query_builder = _GoogleSheetQueryBuilder(replacer)
 
     query = (
         query_builder.where("field1 = ?", "field1")
@@ -62,5 +62,5 @@ def test_query_builder() -> None:
     assert query == 'SELECT B,C WHERE B == "hello" LIMIT 10 OFFSET 5'
 
 
-def new_query_builder() -> GoogleSheetQueryBuilder:
-    return GoogleSheetQueryBuilder(DummyReplacer())
+def new_query_builder() -> _GoogleSheetQueryBuilder:
+    return _GoogleSheetQueryBuilder(DummyReplacer())
