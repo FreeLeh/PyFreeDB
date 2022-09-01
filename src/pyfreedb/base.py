@@ -11,5 +11,3 @@ class Codec(abc.ABC):
 
 class InvalidOperationError(Exception):
     """Operation is not supported"""
-
-    pass
