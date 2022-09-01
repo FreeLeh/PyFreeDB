@@ -29,11 +29,11 @@ class ServiceAccountGoogleAuthClient(GoogleAuthClient):
         """Initialise the auth client using the provided service account dict.
 
         Args:
-            service_account_info: the service account info in dict form.
-            scopes: list of permitted operation by the authentication info.
+            service_account_info: The service account info in dict form.
+            scopes: List of permitted operation by the authentication info.
 
         Returns:
-            ServiceAccountGoogleAuthClient: the auth client instance.
+            ServiceAccountGoogleAuthClient: The auth client instance.
         """
         creds = service_account.Credentials.from_service_account_info(service_account_info, scopes=scopes)
         return cls(creds)
@@ -47,14 +47,19 @@ class ServiceAccountGoogleAuthClient(GoogleAuthClient):
         """Initialise the auth client by reading the service account info from a file.
 
         Args:
-            filename: the path to file that contains the service account info.
-            scopes: list of permitted operation by the authentication info.
+            filename: The path to file that contains the service account info.
+            scopes: List of permitted operation by the authentication info.
 
         Returns:
-            ServiceAccountGoogleAuthClient: the auth client instance.
+            ServiceAccountGoogleAuthClient: The auth client instance.
         """
         creds = service_account.Credentials.from_service_account_file(filename, scopes=scopes)
         return cls(creds)
 
     def credentials(self) -> service_account.Credentials:
+        """Returns the authenticated Google credentials.
+        
+        Returns:
+            google.oauth2.service_account.Credentials: The authenticated Google credentials.
+        """
         return self._creds

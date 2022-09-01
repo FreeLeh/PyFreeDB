@@ -2,14 +2,15 @@ import abc
 
 
 class Codec(abc.ABC):
-    def encode(self, data: bytes) -> str:
+    """Codec defines the algorithm to encode and decode data before it's stored and retrieved from Google Sheets."""
+    def encode(self, _: bytes) -> str:
         pass
 
-    def decode(self, data: str) -> bytes:
+    def decode(self, _: str) -> bytes:
         pass
 
 
 class InvalidOperationError(Exception):
-    """Operation is not supported"""
+    """Operation is not supported."""
 
     pass

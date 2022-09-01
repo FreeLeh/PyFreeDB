@@ -14,6 +14,8 @@ AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
 class GoogleSheetRowStore(Generic[T]):
+    """This class implements the FreeDB row store protocol."""
+
     _RID_COLUMN_NAME = "_rid"
     _WHERE_DEFAULT_CLAUSE = f"{_RID_COLUMN_NAME} IS NOT NULL"
 
@@ -30,10 +32,10 @@ class GoogleSheetRowStore(Generic[T]):
         and will update the first row to be the column headers.
 
         Args:
-            auth_client: the credential that we're going to use to call the Google Sheet APIs.
-            spreadsheet_id: the spreadsheet id that we're going to operate on.
-            sheet_name: the sheet name that we're going to operate on.
-            object_cls: the row model definition that represents how the data inside the sheet looks like.
+            auth_client: The credential that we're going to use to call the Google Sheet APIs.
+            spreadsheet_id: The spreadsheet id that we're going to operate on.
+            sheet_name: The sheet name that we're going to operate on.
+            object_cls: The row model definition that represents how the data inside the sheet looks like.
         """
         if not issubclass(object_cls, Model):
             raise TypeError("object_cls must subclass Model.")
@@ -67,10 +69,10 @@ class GoogleSheetRowStore(Generic[T]):
         If the passed in `columns` is empty, all columns will be returned.
 
         Args:
-            *columns: list of columns that we want to get.
+            *columns: List of columns that we want to get.
 
         Returns:
-            pyfreedb.row.stmt.SelectStmt: the select statement that is configured to return the selected columns.
+            pyfreedb.row.stmt.SelectStmt: The select statement that is configured to return the selected columns.
 
         Examples:
             Get rows that has name equals to `"cat"`:
@@ -88,10 +90,10 @@ class GoogleSheetRowStore(Generic[T]):
         """Create the insert statement to insert given rows into the sheet.
 
         Args:
-            rows: list of rows to be inserted.
+            rows: List of rows to be inserted.
 
         Returns:
-            pyfreedb.row.stmt.InsertStmt: the insert statement that is configured to insert the given rows.
+            pyfreedb.row.stmt.InsertStmt: The insert statement that is configured to insert the given rows.
 
         Examples:
             Insert a row into the DB.
@@ -106,10 +108,10 @@ class GoogleSheetRowStore(Generic[T]):
         """Create the update statement to update rows on the sheet with the given value.
 
         Args:
-            update_value: map of value by the field name.
+            update_value: Map of value by the field name.
 
         Returns:
-            pyfreedb.row.stmt.UpdateStmt: the update statement that is configured to update the affected rows with the
+            pyfreedb.row.stmt.UpdateStmt: The update statement that is configured to update the affected rows with the
                                           given value.
 
         Examples:
@@ -128,7 +130,7 @@ class GoogleSheetRowStore(Generic[T]):
         """Create a delete statement to delete the affected rows.
 
         Returns:
-            pyfreedb.row.stmt.DeleteStmt: a delete statement.
+            pyfreedb.row.stmt.DeleteStmt: A delete statement.
 
         Exemples:
             To delete all rows that has name equals to cat (suppose there are 10 of them):
@@ -142,7 +144,7 @@ class GoogleSheetRowStore(Generic[T]):
         """Create a count statement to count how many rows are there in the sheet.
 
         Returns:
-            pyfreedb.row.stmt.CountStmt: a count statement.
+            pyfreedb.row.stmt.CountStmt: A count statement.
 
         Examples:
             To count how many rows that has `name` equals to `"cat"` (suppose that there are 10 of them):

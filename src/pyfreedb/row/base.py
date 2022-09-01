@@ -9,10 +9,10 @@ class Ordering:
         """Specify column ordering of the query result in ascending order.
 
         Args:
-            field_name: the column name.
+            field_name: The column name.
 
         Returns:
-            Ordering: the column order object.
+            Ordering: The column order object.
         """
         obj = cls()
         obj._field_name = field_name
@@ -24,10 +24,10 @@ class Ordering:
         """Specify column ordering of the query result in descending order.
 
         Args:
-            field_name: the column name.
+            field_name: The column name.
 
         Returns:
-            Ordering: the column order object.
+            Ordering: The column order object.
         """
         obj = cls()
         obj._field_name = field_name

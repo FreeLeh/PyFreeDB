@@ -29,11 +29,11 @@ class OAuth2GoogleAuthClient(GoogleAuthClient):
         """Initialise the auth client using the provided dict.
 
         Args:
-            authorized_user_info: the user authentication info in dict form.
-            scopes: list of permitted operation by the authentication info.
+            authorized_user_info: The user authentication info in dict form.
+            scopes: List of permitted operation by the authentication info.
 
         Returns:
-            OAuth2GoogleAuthClient: the auth client instance.
+            OAuth2GoogleAuthClient: The auth client instance.
         """
         creds = Credentials.from_authorized_user_info(authorized_user_info, scopes=scopes)
         return cls(creds)
@@ -51,12 +51,12 @@ class OAuth2GoogleAuthClient(GoogleAuthClient):
         requires interaction via browser) and will save the authentication info in the given `authorized_user_file.
 
         Args:
-            authorized_user_file: the filename of the user authentication info.
-            client_secret_filename: the service secret file (obtainable from the Google Credential dashboard).
-            scopes: list of permitted operation by the authentication info.
+            authorized_user_file: The filename of the user authentication info.
+            client_secret_filename: The service secret file (obtainable from the Google Credential dashboard).
+            scopes: List of permitted operation by the authentication info.
 
         Returns:
-            OAuth2GoogleAuthClient: the auth client instance.
+            OAuth2GoogleAuthClient: The auth client instance.
         """
         if os.path.exists(authorized_user_file):
             creds = Credentials.from_authorized_user_file(authorized_user_file, scopes=scopes)
@@ -73,4 +73,9 @@ class OAuth2GoogleAuthClient(GoogleAuthClient):
         return cls(creds)
 
     def credentials(self) -> Credentials:
+        """Returns the authenticated Google credentials.
+        
+        Returns:
+            google.oauth2.credentials.Credentials: The authenticated Google credentials.
+        """
         return self._creds

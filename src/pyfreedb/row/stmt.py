@@ -28,11 +28,11 @@ class CountStmt(Generic[T]):
         based on their appearance order.
 
         Args:
-            condition: conditions of the data that we're going to get.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            CountStmt: the count statement with the given WHERE condition applied.
+            CountStmt: The count statement with the given WHERE condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the select statement:
@@ -47,7 +47,7 @@ class CountStmt(Generic[T]):
         """Execute the count statement.
 
         Returns:
-            int: number of rows that matched with the given condition.
+            int: Number of rows that matched with the given condition.
         """
         query = self._query.build_select([f"COUNT({self._store._RID_COLUMN_NAME})"])
         rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
@@ -77,11 +77,11 @@ class SelectStmt(Generic[T]):
         based on their appearance ordering.
 
         Args:
-            condition: conditions of the data that we're going to get.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            SelectStmt: the select statement with the given WHERE condition applied.
+            SelectStmt: The select statement with the given WHERE condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the select statement:
@@ -96,10 +96,10 @@ class SelectStmt(Generic[T]):
         """Defines the maximum number of rows that we're going to return.
 
         Args:
-            limit: limit that we want to apply.
+            limit: Limit that we want to apply.
 
         Returns:
-            SelectStatement: select statement with the limit applied.
+            SelectStatement: Select statement with the limit applied.
         """
         self._query.limit(limit)
         return self
@@ -108,10 +108,10 @@ class SelectStmt(Generic[T]):
         """Defines the offset of the returned rows.
 
         Args:
-            offset: offset that we want to apply.
+            offset: Offset that we want to apply.
 
         Returns:
-            SelectStatement: select statement with the offset applied.
+            SelectStatement: Select statement with the offset applied.
         """
         self._query.offset(offset)
         return self
@@ -120,10 +120,10 @@ class SelectStmt(Generic[T]):
         """Defines the column ordering of the returned rows.
 
         Args:
-            *orderings: the column ordering that we want to apply.
+            *orderings: The column ordering that we want to apply.
 
         Returns:
-            SelectStmt: select statement with the column ordering applied.
+            SelectStmt: Select statement with the column ordering applied.
         """
         self._query.order_by(*orderings)
         return self
@@ -132,7 +132,7 @@ class SelectStmt(Generic[T]):
         """Execute the select statement.
 
         Returns:
-            list: list of rows that matched the given condition.
+            list: List of rows that matched the given condition.
         """
         query = self._query.build_select(self._selected_columns)
         rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
@@ -209,11 +209,11 @@ class UpdateStmt(Generic[T]):
         based on their appearance ordering.
 
         Args:
-            condition: conditions of the data that we're going to update.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to update.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            UpdateStmt: the delete statement with the given WHERE condition applied.
+            UpdateStmt: The delete statement with the given WHERE condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the update statement:
@@ -228,7 +228,7 @@ class UpdateStmt(Generic[T]):
         """Execute the update statement.
 
         Returns:
-            int: the number of updated rows.
+            int: The number of updated rows.
         """
         query = self._query.build_select([self._store._RID_COLUMN_NAME])
         affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
@@ -270,11 +270,11 @@ class DeleteStmt(Generic[T]):
         based on their appearance ordering.
 
         Args:
-            condition: conditions of the data that we're going to delete.
-            *args: list of arguments that will be used to fill in the placeholders in the given `condition`.
+            condition: Conditions of the data that we're going to delete.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
 
         Returns:
-            DeleteStmt: the delete statement with the given where condition applied.
+            DeleteStmt: The delete statement with the given where condition applied.
 
         Examples:
             To apply "WHERE age > 10" filter on the delete statement:
@@ -289,7 +289,7 @@ class DeleteStmt(Generic[T]):
         """Execute the delete statement.
 
         Returns:
-            int: number of rows deleted.
+            int: Number of rows deleted.
         """
         query = self._query.build_select([self._store._RID_COLUMN_NAME])
         affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)

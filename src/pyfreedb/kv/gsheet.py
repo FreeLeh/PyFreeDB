@@ -13,6 +13,8 @@ AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
 class GoogleSheetKVStore:
+    """This class implements the FreeDB KV store protocol."""
+
     DEFAULT_MODE = 0
     """Use the KV Store with the default mode."""
 
@@ -36,11 +38,11 @@ class GoogleSheetKVStore:
         During initialisation, the store will create the sheet if `sheet_name` doesn't exists inside the spreadsheet.
 
         Args:
-            auth_client: the credential that we're going to use to call the Google Sheet APIs.
-            spreadsheet_id: the spreadsheet id that we're going to operate on.
-            sheet_name: the sheet name that we're going to operate on.
-            codec: the codec that will be used to serialize/deserialize the value.
-            mode: the KV storage strategy.
+            auth_client: The credential that we're going to use to call the Google Sheet APIs.
+            spreadsheet_id: The spreadsheet id that we're going to operate on.
+            sheet_name: The sheet name that we're going to operate on.
+            codec: The codec that will be used to serialize/deserialize the value.
+            mode: The KV storage strategy.
         """
 
         self._auth_client = auth_client
@@ -79,12 +81,13 @@ class GoogleSheetKVStore:
         """Returns the value associated with the given `key`.
 
         Args:
-            key: the key of the item that we want to get.
+            key: The key of the item that we want to get.
 
         Returns:
-            bytes: the value associated by the given key.
+            bytes: The value associated by the given key.
 
-            Will raise KeyNotFoundError if the key doesn't exists.
+        Raises:
+            KeyNotFoundError: An error when the key doesn't exists.
         """
         self._ensure_initialised()
 
@@ -109,8 +112,8 @@ class GoogleSheetKVStore:
         """Set the value of entry associated with the given `key` with the given`value`.
 
         Args:
-            key: the key of the entry that we want to set.
-            value: the value that we want to store.
+            key: The key of the entry that we want to set.
+            value: The value that we want to store.
         """
         self._ensure_initialised()
 
@@ -162,7 +165,7 @@ class GoogleSheetKVStore:
         """Delete the entry associated with the given `key`.
 
         Args:
-            key: the key of the entry that we want to delete.
+            key: The key of the entry that we want to delete.
         """
         self._ensure_initialised()
 
