@@ -11,7 +11,7 @@ class BasicCodec(Codec):
 
         Args:
             data: The raw bytes data provided by the client.
-        
+
         Returns:
             str: The encoded data in string format.
         """

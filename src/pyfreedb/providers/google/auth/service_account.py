@@ -58,7 +58,7 @@ class ServiceAccountGoogleAuthClient(GoogleAuthClient):
 
     def credentials(self) -> service_account.Credentials:
         """Returns the authenticated Google credentials.
-        
+
         Returns:
             google.oauth2.service_account.Credentials: The authenticated Google credentials.
         """

@@ -1,5 +1,4 @@
 import dataclasses
-import inspect
 from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union, cast
 
 
@@ -12,8 +11,6 @@ class NotSet:
     >>> model_obj.age is NotSet
     True
     """
-
-    pass
 
 
 T = TypeVar("T")

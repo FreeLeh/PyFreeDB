@@ -74,7 +74,7 @@ class OAuth2GoogleAuthClient(GoogleAuthClient):
 
     def credentials(self) -> Credentials:
         """Returns the authenticated Google credentials.
-        
+
         Returns:
             google.oauth2.credentials.Credentials: The authenticated Google credentials.
         """

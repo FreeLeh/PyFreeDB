@@ -43,5 +43,3 @@ class Ordering:
 
 class InvalidQuery(Exception):
     """Invalid query operation"""
-
-    pass
