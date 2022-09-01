@@ -4,20 +4,24 @@ from typing import Any, Callable, List
 from pyfreedb.base import Codec, InvalidOperationError
 from pyfreedb.codec import BasicCodec
 from pyfreedb.providers.google.auth.base import GoogleAuthClient
-from pyfreedb.providers.google.sheet.base import A1CellSelector, A1Range
-from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreedb.providers.google.sheet.base import _A1CellSelector, _A1Range
+from pyfreedb.providers.google.sheet.wrapper import _GoogleSheetWrapper
 
-from .base import KeyNotFoundError, KVStore
+from .base import KeyNotFoundError
 
 AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
-class GoogleSheetKVStore(KVStore):
+class GoogleSheetKVStore:
     DEFAULT_MODE = 0
+    """Use the KV Store with the default mode."""
+
     APPEND_ONLY_MODE = 1
-    SCRATCHPAD_SUFFIX = "_scratch"
-    SCRATCHPAD_BOOKED_VALUE = "BOOKED"
-    NA_VALUE = "#N/A"
+    """Use the KV Store with the append only mode."""
+
+    _SCRATCHPAD_SUFFIX = "_scratch"
+    _SCRATCHPAD_BOOKED_VALUE = "BOOKED"
+    _NA_VALUE = "#N/A"
 
     def __init__(
         self,
@@ -41,12 +45,12 @@ class GoogleSheetKVStore(KVStore):
 
         self._auth_client = auth_client
         self._spreadsheet_id = spreadsheet_id
-        self._scratchpad_name = sheet_name + self.SCRATCHPAD_SUFFIX
+        self._scratchpad_name = sheet_name + self._SCRATCHPAD_SUFFIX
         self._sheet_name = sheet_name
         self._codec: Codec = codec
         self._mode = mode
 
-        self._wrapper = GoogleSheetWrapper(auth_client)
+        self._wrapper = _GoogleSheetWrapper(auth_client)
         self._ensure_sheet()
         self._book_scratchpad_cell()
         self._closed = False
@@ -65,8 +69,8 @@ class GoogleSheetKVStore(KVStore):
     def _book_scratchpad_cell(self) -> None:
         result = self._wrapper.overwrite_rows(
             self._spreadsheet_id,
-            A1Range.from_notation(self._scratchpad_name),
-            [[self.SCRATCHPAD_BOOKED_VALUE]],
+            _A1Range.from_notation(self._scratchpad_name),
+            [[self._SCRATCHPAD_BOOKED_VALUE]],
         )
 
         self._scratchpad_cell = result.updated_range
@@ -131,25 +135,25 @@ class GoogleSheetKVStore(KVStore):
             self._wrapper.update_rows(self._spreadsheet_id, key_range, [[key, data, ts]])
         except KeyNotFoundError:
             self._wrapper.overwrite_rows(
-                self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]]
+                self._spreadsheet_id, _A1Range.from_notation(self._sheet_name), [[key, data, ts]]
             )
 
-    def _find_key_a1range(self, key: str) -> A1Range:
+    def _find_key_a1range(self, key: str) -> _A1Range:
         formula = '=MATCH("{key}", {sheet_name}!A:A, 0)'.format(key=key, sheet_name=self._sheet_name)
         resp = self._wrapper.update_rows(self._spreadsheet_id, self._scratchpad_cell, [[formula]])
 
         row_idx = self._ensure_values(resp.updated_values)
-        return A1Range(self._sheet_name, A1CellSelector(row=row_idx), A1CellSelector(row=row_idx))
+        return _A1Range(self._sheet_name, _A1CellSelector(row=row_idx), _A1CellSelector(row=row_idx))
 
     def _append_only_set(self, key: str, data: str, ts: int) -> None:
-        self._wrapper.insert_rows(self._spreadsheet_id, A1Range.from_notation(self._sheet_name), [[key, data, ts]])
+        self._wrapper.insert_rows(self._spreadsheet_id, _A1Range.from_notation(self._sheet_name), [[key, data, ts]])
 
     def _ensure_values(self, values: List[List[Any]]) -> Any:
         if not values:
             raise KeyNotFoundError
 
         value = values[0][0]
-        if not value or value == self.NA_VALUE:
+        if not value or value == self._NA_VALUE:
             raise KeyNotFoundError
 
         return value

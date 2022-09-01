@@ -1,10 +1,10 @@
 from typing import Any, Dict, Generic, List, Type, TypeVar
 
 from pyfreedb.providers.google.auth.base import GoogleAuthClient
-from pyfreedb.providers.google.sheet.base import A1Range
-from pyfreedb.providers.google.sheet.wrapper import GoogleSheetWrapper
+from pyfreedb.providers.google.sheet.base import _A1Range
+from pyfreedb.providers.google.sheet.wrapper import _GoogleSheetWrapper
 from pyfreedb.row.models import Model
-from pyfreedb.row.query_builder import ColumnReplacer, GoogleSheetQueryBuilder
+from pyfreedb.row.query_builder import _ColumnReplacer, _GoogleSheetQueryBuilder
 from pyfreedb.row.stmt import CountStmt, DeleteStmt, InsertStmt, SelectStmt, UpdateStmt
 
 T = TypeVar("T", bound=Model)
@@ -14,8 +14,8 @@ AUTH_SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
 class GoogleSheetRowStore(Generic[T]):
-    RID_COLUMN_NAME = "_rid"
-    WHERE_DEFAULT_CLAUSE = f"{RID_COLUMN_NAME} IS NOT NULL"
+    _RID_COLUMN_NAME = "_rid"
+    _WHERE_DEFAULT_CLAUSE = f"{_RID_COLUMN_NAME} IS NOT NULL"
 
     def __init__(
         self,
@@ -41,12 +41,12 @@ class GoogleSheetRowStore(Generic[T]):
         self._sheet_name = sheet_name
         self._object_cls = object_cls
 
-        self._wrapper = GoogleSheetWrapper(auth_client)
+        self._wrapper = _GoogleSheetWrapper(auth_client)
         self._spreadsheet_id = spreadsheet_id
         self._sheet_name = sheet_name
         self._ensure_sheet()
 
-        self._replacer = ColumnReplacer(self.RID_COLUMN_NAME, object_cls)
+        self._replacer = _ColumnReplacer(self._RID_COLUMN_NAME, object_cls)
         self._columns = list(object_cls._fields.keys())
 
     def _ensure_sheet(self) -> None:
@@ -55,11 +55,11 @@ class GoogleSheetRowStore(Generic[T]):
         except Exception:
             pass
 
-        column_headers = [self.RID_COLUMN_NAME]
+        column_headers = [self._RID_COLUMN_NAME]
         for field in self._object_cls._fields.values():
             column_headers.append(field._column_name)
 
-        self._wrapper.update_rows(self._spreadsheet_id, A1Range(self._sheet_name), [column_headers])
+        self._wrapper.update_rows(self._spreadsheet_id, _A1Range(self._sheet_name), [column_headers])
 
     def select(self, *columns: str) -> SelectStmt[T]:
         """Create the select statement that will fetch the selected columns from the sheet.
@@ -70,7 +70,13 @@ class GoogleSheetRowStore(Generic[T]):
             *columns: list of columns that we want to get.
 
         Returns:
-            SelectStmt: the select statement that is configured to return the selected columns.
+            pyfreedb.row.stmt.SelectStmt: the select statement that is configured to return the selected columns.
+
+        Examples:
+            Get rows that has name equals to `"cat"`:
+
+            >>> store.select("name").where("name = ?", "cat").execute()
+            [Person(name="cat")]
         """
         selected_columns = list(columns)
         if len(selected_columns) == 0:
@@ -85,7 +91,14 @@ class GoogleSheetRowStore(Generic[T]):
             rows: list of rows to be inserted.
 
         Returns:
-            InsertStmt: the insert statement that is configured to insert the given rows.
+            pyfreedb.row.stmt.InsertStmt: the insert statement that is configured to insert the given rows.
+
+        Examples:
+            Insert a row into the DB.
+
+            >>> rows = [Person(name="cat")]
+            >>> store.insert(rows).execute()
+            None
         """
         return InsertStmt(self, rows)
 
@@ -93,15 +106,16 @@ class GoogleSheetRowStore(Generic[T]):
         """Create the update statement to update rows on the sheet with the given value.
 
         Args:
-            update_value: map of value by the field_name.
+            update_value: map of value by the field name.
 
         Returns:
-            UpdateStmt: the update statement that is configured to update the affected rows with the given value.
+            pyfreedb.row.stmt.UpdateStmt: the update statement that is configured to update the affected rows with the
+                                          given value.
 
         Examples:
-            To update all the rows (assume there's 10 rows) so that column `name` equals to `"cat"`:
+            To update all the rows (assume there are 10 rows) so that column `name` equals to `"cat"`:
 
-            >> store.update({"name": "cat"}).execute()
+            >>> store.update({"name": "cat"}).execute()
             10
         """
         for key in update_value:
@@ -114,7 +128,13 @@ class GoogleSheetRowStore(Generic[T]):
         """Create a delete statement to delete the affected rows.
 
         Returns:
-            DeleteStmt: a delete statement.
+            pyfreedb.row.stmt.DeleteStmt: a delete statement.
+
+        Exemples:
+            To delete all rows that has name equals to cat (suppose there are 10 of them):
+
+            >>> store.delete().where("name = ?", "cat").execute()
+            10
         """
         return DeleteStmt(self)
 
@@ -122,15 +142,15 @@ class GoogleSheetRowStore(Generic[T]):
         """Create a count statement to count how many rows are there in the sheet.
 
         Returns:
-            CountStmt: a count statement.
+            pyfreedb.row.stmt.CountStmt: a count statement.
 
         Examples:
-            To count how many rows that has `name` equals to `"cat"` (suppose that there will be 10 of them):
+            To count how many rows that has `name` equals to `"cat"` (suppose that there are 10 of them):
 
-            >> store.count().where("name = ?", "cat").execute()
+            >>> store.count().where("name = ?", "cat").execute()
             10
         """
         return CountStmt(self)
 
-    def _new_query_builder(self) -> GoogleSheetQueryBuilder:
-        return GoogleSheetQueryBuilder(self._replacer).where(self.WHERE_DEFAULT_CLAUSE)
+    def _new_query_builder(self) -> _GoogleSheetQueryBuilder:
+        return _GoogleSheetQueryBuilder(self._replacer).where(self._WHERE_DEFAULT_CLAUSE)

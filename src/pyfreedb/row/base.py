@@ -1,4 +1,6 @@
 class Ordering:
+    """A class to specify specific column ordering of the query result."""
+
     _field_name: str
     _value: str
 
@@ -32,7 +34,7 @@ class Ordering:
         obj._value = "DESC"
         return obj
 
-    def copy(self) -> "Ordering":
+    def _copy(self) -> "Ordering":
         obj = Ordering()
         obj._field_name = self._field_name
         obj._value = self._value
@@ -40,4 +42,6 @@ class Ordering:
 
 
 class InvalidQuery(Exception):
+    """Invalid query operation"""
+
     pass
