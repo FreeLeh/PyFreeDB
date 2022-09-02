@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>pyfreedb.row.models API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pyfreedb.row.models</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import dataclasses
+from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union, cast
+
+
+class NotSet:
+    &#34;&#34;&#34;A dummy class to differentiate between fields that are not set and None.
+
+    &gt;&gt;&gt; model_obj = store.select(&#34;name&#34;).excute()[0]
+    &gt;&gt;&gt; model_obj.name is NotSet
+    False
+    &gt;&gt;&gt; model_obj.age is NotSet
+    True
+    &#34;&#34;&#34;
+
+
+T = TypeVar(&#34;T&#34;)
+
+
+class _Field(Generic[T]):
+    _typ: Type[T]
+    _column_name: str
+    _field_name: str
+
+    def __init__(self, column_name: str = &#34;&#34;) -&gt; None:
+        self._column_name = column_name
+
+    def __set_name__(self, _: Any, name: str) -&gt; None:
+        self._field_name = name
+
+        if self._column_name == &#34;&#34;:
+            self._column_name = name
+
+    def __get__(self, obj: Any, _: Any) -&gt; Optional[T]:
+        value = getattr(obj._data, self._field_name)
+        return cast(Optional[T], value)
+
+    def __set__(self, obj: Any, value: Optional[T]) -&gt; None:
+        self.__ensure_type(value)
+        return setattr(obj._data, self._field_name, value)
+
+    def __ensure_type(self, value: Any) -&gt; None:
+        if value is None or value is NotSet:
+            return
+
+        if not isinstance(value, self._typ):
+            raise TypeError(f&#34;value of field {self._field_name} has the wrong type&#34;)
+
+
+class IntegerField(_Field[int]):
+    &#34;&#34;&#34;A field for integer number values.&#34;&#34;&#34;
+
+    _typ = int
+
+
+class FloatField(_Field[float]):
+    &#34;&#34;&#34;A field for storing floating point number values.&#34;&#34;&#34;
+
+    _typ = float
+
+
+class BoolField(_Field[bool]):
+    &#34;&#34;&#34;A field for storing boolean values.&#34;&#34;&#34;
+
+    _typ = bool
+
+
+class StringField(_Field[str]):
+    &#34;&#34;&#34;A field for storing string values.&#34;&#34;&#34;
+
+    _typ = str
+
+
+class _Meta(type):
+    def __new__(cls, name: str, bases: Any, dct: Any) -&gt; &#34;_Meta&#34;:
+        new_cls = super().__new__(cls, name, bases, dct)
+
+        # In python3.7 dict ordering is guaranteed based on the insert time.
+        fields = {}
+        for base in bases:
+            try:
+                fields.update(base._fields)
+            except AttributeError:
+                pass
+
+        for field_name, value in dct.items():
+            if not isinstance(value, _Field):
+                continue
+
+            fields[field_name] = value
+
+        setattr(new_cls, &#34;_fields&#34;, fields)
+
+        # Internally, we will store the actual data in a dataclass so that we don&#39;t need to deal with the details of
+        # how to store the data.
+        dataclasses_fields = []
+        for (field_name, field) in fields.items():
+            value = dataclasses.field(default=NotSet)
+            dataclasses_fields.append((field_name, cast(type, Union[field._typ, NotSet]), value))
+
+        data_cls = dataclasses.make_dataclass(name, dataclasses_fields)
+
+        # Ideally we should make make the __init__ annotation is the same as dataclasses&#39; __init__
+        # annotation to improve the developer experience.
+        def init(self: Any, *args: Any, **kwargs: Any) -&gt; None:
+            self._data = data_cls(*args, **kwargs)
+            self._validate_type()
+
+        def repr(self: Any) -&gt; str:
+            return str(self._data)
+
+        def eq(self: Any, other: Any) -&gt; bool:
+            return new_cls is other.__class__ and self._data == other._data
+
+        setattr(new_cls, &#34;__init__&#34;, init)
+        setattr(new_cls, &#34;__repr__&#34;, repr)
+        setattr(new_cls, &#34;__eq__&#34;, eq)
+
+        return new_cls
+
+
+class Model(metaclass=_Meta):
+    &#34;&#34;&#34;Base class of model class to be used by GoogleSheetRowStore.
+
+    Client should not use this class directly, inherit this class to define your own model instead.
+
+    &gt;&gt;&gt; class Person(Model):
+    ...     name = StringField()
+    ...     age = IntegerField()
+    &#34;&#34;&#34;
+
+    _fields: Dict[str, Union[IntegerField, FloatField, BoolField, StringField]]
+
+    def _validate_type(self) -&gt; None:
+        for field in self._fields:
+            # Trigger the validation by reassigning the value to itself.
+            setattr(self, field, getattr(self, field))
+
+
+__pydoc__ = {}
+__pydoc__[&#34;StringField&#34;] = StringField.__doc__</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pyfreedb.row.models.BoolField"><code class="flex name class">
+<span>class <span class="ident">BoolField</span></span>
+<span>(</span><span>column_name: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A field for storing boolean values.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BoolField(_Field[bool]):
+    &#34;&#34;&#34;A field for storing boolean values.&#34;&#34;&#34;
+
+    _typ = bool</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pyfreedb.row.models._Field</li>
+<li>typing.Generic</li>
+</ul>
+</dd>
+<dt id="pyfreedb.row.models.FloatField"><code class="flex name class">
+<span>class <span class="ident">FloatField</span></span>
+<span>(</span><span>column_name: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A field for storing floating point number values.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FloatField(_Field[float]):
+    &#34;&#34;&#34;A field for storing floating point number values.&#34;&#34;&#34;
+
+    _typ = float</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pyfreedb.row.models._Field</li>
+<li>typing.Generic</li>
+</ul>
+</dd>
+<dt id="pyfreedb.row.models.IntegerField"><code class="flex name class">
+<span>class <span class="ident">IntegerField</span></span>
+<span>(</span><span>column_name: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A field for integer number values.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IntegerField(_Field[int]):
+    &#34;&#34;&#34;A field for integer number values.&#34;&#34;&#34;
+
+    _typ = int</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pyfreedb.row.models._Field</li>
+<li>typing.Generic</li>
+</ul>
+</dd>
+<dt id="pyfreedb.row.models.Model"><code class="flex name class">
+<span>class <span class="ident">Model</span></span>
+<span>(</span><span>*args: Any, **kwargs: Any)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class of model class to be used by GoogleSheetRowStore.</p>
+<p>Client should not use this class directly, inherit this class to define your own model instead.</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; class Person(Model):
+...     name = StringField()
+...     age = IntegerField()
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Model(metaclass=_Meta):
+    &#34;&#34;&#34;Base class of model class to be used by GoogleSheetRowStore.
+
+    Client should not use this class directly, inherit this class to define your own model instead.
+
+    &gt;&gt;&gt; class Person(Model):
+    ...     name = StringField()
+    ...     age = IntegerField()
+    &#34;&#34;&#34;
+
+    _fields: Dict[str, Union[IntegerField, FloatField, BoolField, StringField]]
+
+    def _validate_type(self) -&gt; None:
+        for field in self._fields:
+            # Trigger the validation by reassigning the value to itself.
+            setattr(self, field, getattr(self, field))</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.models.NotSet"><code class="flex name class">
+<span>class <span class="ident">NotSet</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>A dummy class to differentiate between fields that are not set and None.</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; model_obj = store.select(&quot;name&quot;).excute()[0]
+&gt;&gt;&gt; model_obj.name is NotSet
+False
+&gt;&gt;&gt; model_obj.age is NotSet
+True
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NotSet:
+    &#34;&#34;&#34;A dummy class to differentiate between fields that are not set and None.
+
+    &gt;&gt;&gt; model_obj = store.select(&#34;name&#34;).excute()[0]
+    &gt;&gt;&gt; model_obj.name is NotSet
+    False
+    &gt;&gt;&gt; model_obj.age is NotSet
+    True
+    &#34;&#34;&#34;</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.models.StringField"><code class="flex name class">
+<span>class <span class="ident">StringField</span></span>
+<span>(</span><span>column_name: str = '')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>A field for storing string values.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class StringField(_Field[str]):
+    &#34;&#34;&#34;A field for storing string values.&#34;&#34;&#34;
+
+    _typ = str</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pyfreedb.row.models._Field</li>
+<li>typing.Generic</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pyfreedb.row" href="index.html">pyfreedb.row</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pyfreedb.row.models.BoolField" href="#pyfreedb.row.models.BoolField">BoolField</a></code></h4>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.models.FloatField" href="#pyfreedb.row.models.FloatField">FloatField</a></code></h4>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.models.IntegerField" href="#pyfreedb.row.models.IntegerField">IntegerField</a></code></h4>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.models.Model" href="#pyfreedb.row.models.Model">Model</a></code></h4>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.models.NotSet" href="#pyfreedb.row.models.NotSet">NotSet</a></code></h4>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.models.StringField" href="#pyfreedb.row.models.StringField">StringField</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

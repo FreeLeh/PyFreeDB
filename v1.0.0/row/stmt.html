@@ -1,0 +1,1282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>pyfreedb.row.stmt API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pyfreedb.row.stmt</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">from typing import TYPE_CHECKING, Any, Dict, Generic, List, TypeVar
+
+from pyfreedb.providers.google.sheet.base import _A1CellSelector, _A1Range, _BatchUpdateRowsRequest
+from pyfreedb.row.base import Ordering
+from pyfreedb.row.models import Model
+
+if TYPE_CHECKING:
+    from pyfreedb.row.gsheet import GoogleSheetRowStore
+
+T = TypeVar(&#34;T&#34;, bound=Model)
+
+
+class CountStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;):
+        &#34;&#34;&#34;Initialise statement for counting rows.
+
+        Client should not instantiate this class directly, instead use `store.count()` to instantiate it.
+        &#34;&#34;&#34;
+
+        self._store = store
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;CountStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to count.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance order.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            CountStmt: The count statement with the given WHERE condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the select statement:
+
+            &gt;&gt;&gt; store.count().where(&#34;age &gt; ?&#34;, 10).execute()
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def execute(self) -&gt; int:
+        &#34;&#34;&#34;Execute the count statement.
+
+        Returns:
+            int: Number of rows that matched with the given condition.
+        &#34;&#34;&#34;
+        query = self._query.build_select([f&#34;COUNT({self._store._RID_COLUMN_NAME})&#34;])
+        rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+
+        # If the spreadsheet is empty, GViz will return empty rows instead.
+        if len(rows) == 0:
+            return 0
+
+        return int(rows[0][0])
+
+
+class SelectStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;, selected_columns: List[str]):
+        &#34;&#34;&#34;Initialise statement for selecting rows.
+
+        Client should not instantiate this class directly, instead use `store.select(...)` to instantiate it.
+        &#34;&#34;&#34;
+        self._store = store
+        self._selected_columns = selected_columns
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to get.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance ordering.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            SelectStmt: The select statement with the given WHERE condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the select statement:
+
+            &gt;&gt; len(store.select().where(&#34;age &gt; ?&#34;, 10).execute())
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def limit(self, limit: int) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Defines the maximum number of rows that we&#39;re going to return.
+
+        Args:
+            limit: Limit that we want to apply.
+
+        Returns:
+            SelectStatement: Select statement with the limit applied.
+        &#34;&#34;&#34;
+        self._query.limit(limit)
+        return self
+
+    def offset(self, offset: int) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Defines the offset of the returned rows.
+
+        Args:
+            offset: Offset that we want to apply.
+
+        Returns:
+            SelectStatement: Select statement with the offset applied.
+        &#34;&#34;&#34;
+        self._query.offset(offset)
+        return self
+
+    def order_by(self, *orderings: Ordering) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Defines the column ordering of the returned rows.
+
+        Args:
+            *orderings: The column ordering that we want to apply.
+
+        Returns:
+            SelectStmt: Select statement with the column ordering applied.
+        &#34;&#34;&#34;
+        self._query.order_by(*orderings)
+        return self
+
+    def execute(self) -&gt; List[T]:
+        &#34;&#34;&#34;Execute the select statement.
+
+        Returns:
+            list: List of rows that matched the given condition.
+        &#34;&#34;&#34;
+        query = self._query.build_select(self._selected_columns)
+        rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+
+        results = []
+        for row in rows:
+            raw = {}
+            for idx, col in enumerate(self._selected_columns):
+                raw[col] = row[idx]
+
+            results.append(self._store._object_cls(**raw))
+
+        return results
+
+
+class InsertStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;, rows: List[T]):
+        &#34;&#34;&#34;Initialise statement for inserting rows.
+
+        Client should not instantiate this class directly, instead use `store.insert(...)` to instantiate it.
+        &#34;&#34;&#34;
+        self._store = store
+        self._rows = rows
+
+    def execute(self) -&gt; None:
+        &#34;&#34;&#34;Execute the insert statement.
+
+        After a successful insert, all of the `rid` field of the passed in `rows` will be updated.
+
+        Examples:
+            Insert a row.
+
+            &gt;&gt; row = Row(name=&#34;cat&#34;)
+            &gt;&gt; store.insert([row]).execute()
+            &gt;&gt; row.rid
+            2
+        &#34;&#34;&#34;
+        self._store._wrapper.overwrite_rows(
+            self._store._spreadsheet_id,
+            _A1Range.from_notation(self._store._sheet_name),
+            self._get_raw_values(),
+        )
+
+    def _get_raw_values(self) -&gt; List[List[str]]:
+        raw_values = []
+
+        for row in self._rows:
+            # Set _rid value according to the insert protocol.
+            raw = [&#34;=ROW()&#34;]
+
+            for field_name in row._fields:
+                raw.append(getattr(row, field_name))
+
+            raw_values.append(raw)
+
+        return raw_values
+
+
+class UpdateStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;, update_values: Dict[str, str]):
+        &#34;&#34;&#34;Initialise statement for updating rows.
+
+        Client should not instantiate this class directly, instead use `store.update()` to instantiate it.
+        &#34;&#34;&#34;
+        self._store = store
+        self._update_values = update_values
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;UpdateStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to update.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance ordering.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to update.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            UpdateStmt: The delete statement with the given WHERE condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the update statement:
+
+            &gt;&gt; store.update({&#34;name&#34;: &#34;cat&#34;}).where(&#34;age &gt; ?&#34;, 10).execute()
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def execute(self) -&gt; int:
+        &#34;&#34;&#34;Execute the update statement.
+
+        Returns:
+            int: The number of updated rows.
+        &#34;&#34;&#34;
+        query = self._query.build_select([self._store._RID_COLUMN_NAME])
+        affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+        update_candidate_indices = [int(row[0]) for row in affected_rows]
+
+        self._update_rows(update_candidate_indices)
+
+        return len(update_candidate_indices)
+
+    def _update_rows(self, indices: List[int]) -&gt; None:
+        requests = []
+        for row_idx in indices:
+            for col_idx, col in enumerate(self._store._object_cls._fields.keys()):
+                if col not in self._update_values:
+                    continue
+
+                cell_selector = _A1CellSelector.from_rc(col_idx + 2, row_idx)
+                update_range = _A1Range(self._store._sheet_name, cell_selector, cell_selector)
+                requests.append(_BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
+
+        self._store._wrapper.batch_update_rows(self._store._spreadsheet_id, requests)
+
+
+class DeleteStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;):
+        &#34;&#34;&#34;Initialise statement for deleting rows.
+
+        Client should not instantiate this class directly, instead use `store.delete()` to instantiate it.
+        &#34;&#34;&#34;
+
+        self._store = store
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;DeleteStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to delete.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance ordering.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to delete.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            DeleteStmt: The delete statement with the given where condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the delete statement:
+
+            &gt;&gt; store.delete().where(&#34;age &gt; ?&#34;, 10).execute()
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def execute(self) -&gt; int:
+        &#34;&#34;&#34;Execute the delete statement.
+
+        Returns:
+            int: Number of rows deleted.
+        &#34;&#34;&#34;
+        query = self._query.build_select([self._store._RID_COLUMN_NAME])
+        affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+        affected_row_indices = [int(row[0]) for row in affected_rows]
+
+        self._delete_rows(affected_row_indices)
+        return len(affected_row_indices)
+
+    def _delete_rows(self, indices: List[int]) -&gt; None:
+        requests = []
+        for row_idx in indices:
+            row_selector = _A1CellSelector.from_rc(row=row_idx)
+            requests.append(_A1Range(self._store._sheet_name, start=row_selector, end=row_selector))
+
+        self._store._wrapper.clear(self._store._spreadsheet_id, requests)
+
+
+__pdoc__ = {}
+__pdoc__[&#34;CountStmt&#34;] = CountStmt.__init__.__doc__
+__pdoc__[&#34;SelectStmt&#34;] = SelectStmt.__init__.__doc__
+__pdoc__[&#34;InsertStmt&#34;] = InsertStmt.__init__.__doc__
+__pdoc__[&#34;DeleteStmt&#34;] = DeleteStmt.__init__.__doc__
+__pdoc__[&#34;UpdateStmt&#34;] = UpdateStmt.__init__.__doc__</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="pyfreedb.row.stmt.CountStmt"><code class="flex name class">
+<span>class <span class="ident">CountStmt</span></span>
+<span>(</span><span>store: GoogleSheetRowStore[T])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialise statement for counting rows.</p>
+<p>Client should not instantiate this class directly, instead use <code>store.count()</code> to instantiate it.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CountStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;):
+        &#34;&#34;&#34;Initialise statement for counting rows.
+
+        Client should not instantiate this class directly, instead use `store.count()` to instantiate it.
+        &#34;&#34;&#34;
+
+        self._store = store
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;CountStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to count.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance order.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            CountStmt: The count statement with the given WHERE condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the select statement:
+
+            &gt;&gt;&gt; store.count().where(&#34;age &gt; ?&#34;, 10).execute()
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def execute(self) -&gt; int:
+        &#34;&#34;&#34;Execute the count statement.
+
+        Returns:
+            int: Number of rows that matched with the given condition.
+        &#34;&#34;&#34;
+        query = self._query.build_select([f&#34;COUNT({self._store._RID_COLUMN_NAME})&#34;])
+        rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+
+        # If the spreadsheet is empty, GViz will return empty rows instead.
+        if len(rows) == 0:
+            return 0
+
+        return int(rows[0][0])</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Generic</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pyfreedb.row.stmt.CountStmt.execute"><code class="name flex">
+<span>def <span class="ident">execute</span></span>(<span>self) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Execute the count statement.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>Number of rows that matched with the given condition.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def execute(self) -&gt; int:
+    &#34;&#34;&#34;Execute the count statement.
+
+    Returns:
+        int: Number of rows that matched with the given condition.
+    &#34;&#34;&#34;
+    query = self._query.build_select([f&#34;COUNT({self._store._RID_COLUMN_NAME})&#34;])
+    rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+
+    # If the spreadsheet is empty, GViz will return empty rows instead.
+    if len(rows) == 0:
+        return 0
+
+    return int(rows[0][0])</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.stmt.CountStmt.where"><code class="name flex">
+<span>def <span class="ident">where</span></span>(<span>self, condition: str, *args: Any) ‑> <a title="pyfreedb.row.stmt.CountStmt" href="#pyfreedb.row.stmt.CountStmt">CountStmt</a>[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filter the rows that we're going to count.</p>
+<p>The given <code>condition</code> will be used as the WHERE clause on the final query. You can use <code>"?"</code> placeholder
+inside the condition and will be replaced with the actual value given in the <code>*args</code> variadic parameter
+based on their appearance order.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>condition</code></strong></dt>
+<dd>Conditions of the data that we're going to get.</dd>
+<dt><strong><code>*args</code></strong></dt>
+<dd>List of arguments that will be used to fill in the placeholders in the given <code>condition</code>.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="pyfreedb.row.stmt.CountStmt" href="#pyfreedb.row.stmt.CountStmt">CountStmt</a></code></dt>
+<dd>The count statement with the given WHERE condition applied.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<p>To apply "WHERE age &gt; 10" filter on the select statement:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; store.count().where(&quot;age &gt; ?&quot;, 10).execute()
+10
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def where(self, condition: str, *args: Any) -&gt; &#34;CountStmt[T]&#34;:
+    &#34;&#34;&#34;Filter the rows that we&#39;re going to count.
+
+    The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+    inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+    based on their appearance order.
+
+    Args:
+        condition: Conditions of the data that we&#39;re going to get.
+        *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+    Returns:
+        CountStmt: The count statement with the given WHERE condition applied.
+
+    Examples:
+        To apply &#34;WHERE age &gt; 10&#34; filter on the select statement:
+
+        &gt;&gt;&gt; store.count().where(&#34;age &gt; ?&#34;, 10).execute()
+        10
+    &#34;&#34;&#34;
+    self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+    return self</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pyfreedb.row.stmt.DeleteStmt"><code class="flex name class">
+<span>class <span class="ident">DeleteStmt</span></span>
+<span>(</span><span>store: GoogleSheetRowStore[T])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialise statement for deleting rows.</p>
+<p>Client should not instantiate this class directly, instead use <code>store.delete()</code> to instantiate it.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DeleteStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;):
+        &#34;&#34;&#34;Initialise statement for deleting rows.
+
+        Client should not instantiate this class directly, instead use `store.delete()` to instantiate it.
+        &#34;&#34;&#34;
+
+        self._store = store
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;DeleteStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to delete.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance ordering.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to delete.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            DeleteStmt: The delete statement with the given where condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the delete statement:
+
+            &gt;&gt; store.delete().where(&#34;age &gt; ?&#34;, 10).execute()
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def execute(self) -&gt; int:
+        &#34;&#34;&#34;Execute the delete statement.
+
+        Returns:
+            int: Number of rows deleted.
+        &#34;&#34;&#34;
+        query = self._query.build_select([self._store._RID_COLUMN_NAME])
+        affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+        affected_row_indices = [int(row[0]) for row in affected_rows]
+
+        self._delete_rows(affected_row_indices)
+        return len(affected_row_indices)
+
+    def _delete_rows(self, indices: List[int]) -&gt; None:
+        requests = []
+        for row_idx in indices:
+            row_selector = _A1CellSelector.from_rc(row=row_idx)
+            requests.append(_A1Range(self._store._sheet_name, start=row_selector, end=row_selector))
+
+        self._store._wrapper.clear(self._store._spreadsheet_id, requests)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Generic</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pyfreedb.row.stmt.DeleteStmt.execute"><code class="name flex">
+<span>def <span class="ident">execute</span></span>(<span>self) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Execute the delete statement.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>Number of rows deleted.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def execute(self) -&gt; int:
+    &#34;&#34;&#34;Execute the delete statement.
+
+    Returns:
+        int: Number of rows deleted.
+    &#34;&#34;&#34;
+    query = self._query.build_select([self._store._RID_COLUMN_NAME])
+    affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+    affected_row_indices = [int(row[0]) for row in affected_rows]
+
+    self._delete_rows(affected_row_indices)
+    return len(affected_row_indices)</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.stmt.DeleteStmt.where"><code class="name flex">
+<span>def <span class="ident">where</span></span>(<span>self, condition: str, *args: Any) ‑> <a title="pyfreedb.row.stmt.DeleteStmt" href="#pyfreedb.row.stmt.DeleteStmt">DeleteStmt</a>[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filter the rows that we're going to delete.</p>
+<p>The given <code>condition</code> will be used as the WHERE clause on the final query. You can use <code>"?"</code> placeholder
+inside the condition and will be replaced with the actual value given in the <code>*args</code> variadic parameter
+based on their appearance ordering.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>condition</code></strong></dt>
+<dd>Conditions of the data that we're going to delete.</dd>
+<dt><strong><code>*args</code></strong></dt>
+<dd>List of arguments that will be used to fill in the placeholders in the given <code>condition</code>.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="pyfreedb.row.stmt.DeleteStmt" href="#pyfreedb.row.stmt.DeleteStmt">DeleteStmt</a></code></dt>
+<dd>The delete statement with the given where condition applied.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<p>To apply "WHERE age &gt; 10" filter on the delete statement:</p>
+<blockquote>
+<blockquote>
+<p>store.delete().where("age &gt; ?", 10).execute()
+10</p>
+</blockquote>
+</blockquote></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def where(self, condition: str, *args: Any) -&gt; &#34;DeleteStmt[T]&#34;:
+    &#34;&#34;&#34;Filter the rows that we&#39;re going to delete.
+
+    The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+    inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+    based on their appearance ordering.
+
+    Args:
+        condition: Conditions of the data that we&#39;re going to delete.
+        *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+    Returns:
+        DeleteStmt: The delete statement with the given where condition applied.
+
+    Examples:
+        To apply &#34;WHERE age &gt; 10&#34; filter on the delete statement:
+
+        &gt;&gt; store.delete().where(&#34;age &gt; ?&#34;, 10).execute()
+        10
+    &#34;&#34;&#34;
+    self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+    return self</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pyfreedb.row.stmt.InsertStmt"><code class="flex name class">
+<span>class <span class="ident">InsertStmt</span></span>
+<span>(</span><span>store: GoogleSheetRowStore[T], rows: List[~T])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialise statement for inserting rows.</p>
+<p>Client should not instantiate this class directly, instead use <code>store.insert(&hellip;)</code> to instantiate it.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class InsertStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;, rows: List[T]):
+        &#34;&#34;&#34;Initialise statement for inserting rows.
+
+        Client should not instantiate this class directly, instead use `store.insert(...)` to instantiate it.
+        &#34;&#34;&#34;
+        self._store = store
+        self._rows = rows
+
+    def execute(self) -&gt; None:
+        &#34;&#34;&#34;Execute the insert statement.
+
+        After a successful insert, all of the `rid` field of the passed in `rows` will be updated.
+
+        Examples:
+            Insert a row.
+
+            &gt;&gt; row = Row(name=&#34;cat&#34;)
+            &gt;&gt; store.insert([row]).execute()
+            &gt;&gt; row.rid
+            2
+        &#34;&#34;&#34;
+        self._store._wrapper.overwrite_rows(
+            self._store._spreadsheet_id,
+            _A1Range.from_notation(self._store._sheet_name),
+            self._get_raw_values(),
+        )
+
+    def _get_raw_values(self) -&gt; List[List[str]]:
+        raw_values = []
+
+        for row in self._rows:
+            # Set _rid value according to the insert protocol.
+            raw = [&#34;=ROW()&#34;]
+
+            for field_name in row._fields:
+                raw.append(getattr(row, field_name))
+
+            raw_values.append(raw)
+
+        return raw_values</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Generic</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pyfreedb.row.stmt.InsertStmt.execute"><code class="name flex">
+<span>def <span class="ident">execute</span></span>(<span>self) ‑> None</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Execute the insert statement.</p>
+<p>After a successful insert, all of the <code>rid</code> field of the passed in <code>rows</code> will be updated.</p>
+<h2 id="examples">Examples</h2>
+<p>Insert a row.</p>
+<blockquote>
+<blockquote>
+<p>row = Row(name="cat")
+store.insert([row]).execute()
+row.rid
+2</p>
+</blockquote>
+</blockquote></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def execute(self) -&gt; None:
+    &#34;&#34;&#34;Execute the insert statement.
+
+    After a successful insert, all of the `rid` field of the passed in `rows` will be updated.
+
+    Examples:
+        Insert a row.
+
+        &gt;&gt; row = Row(name=&#34;cat&#34;)
+        &gt;&gt; store.insert([row]).execute()
+        &gt;&gt; row.rid
+        2
+    &#34;&#34;&#34;
+    self._store._wrapper.overwrite_rows(
+        self._store._spreadsheet_id,
+        _A1Range.from_notation(self._store._sheet_name),
+        self._get_raw_values(),
+    )</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pyfreedb.row.stmt.SelectStmt"><code class="flex name class">
+<span>class <span class="ident">SelectStmt</span></span>
+<span>(</span><span>store: GoogleSheetRowStore[T], selected_columns: List[str])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialise statement for selecting rows.</p>
+<p>Client should not instantiate this class directly, instead use <code>store.select(&hellip;)</code> to instantiate it.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SelectStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;, selected_columns: List[str]):
+        &#34;&#34;&#34;Initialise statement for selecting rows.
+
+        Client should not instantiate this class directly, instead use `store.select(...)` to instantiate it.
+        &#34;&#34;&#34;
+        self._store = store
+        self._selected_columns = selected_columns
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to get.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance ordering.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to get.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            SelectStmt: The select statement with the given WHERE condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the select statement:
+
+            &gt;&gt; len(store.select().where(&#34;age &gt; ?&#34;, 10).execute())
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def limit(self, limit: int) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Defines the maximum number of rows that we&#39;re going to return.
+
+        Args:
+            limit: Limit that we want to apply.
+
+        Returns:
+            SelectStatement: Select statement with the limit applied.
+        &#34;&#34;&#34;
+        self._query.limit(limit)
+        return self
+
+    def offset(self, offset: int) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Defines the offset of the returned rows.
+
+        Args:
+            offset: Offset that we want to apply.
+
+        Returns:
+            SelectStatement: Select statement with the offset applied.
+        &#34;&#34;&#34;
+        self._query.offset(offset)
+        return self
+
+    def order_by(self, *orderings: Ordering) -&gt; &#34;SelectStmt[T]&#34;:
+        &#34;&#34;&#34;Defines the column ordering of the returned rows.
+
+        Args:
+            *orderings: The column ordering that we want to apply.
+
+        Returns:
+            SelectStmt: Select statement with the column ordering applied.
+        &#34;&#34;&#34;
+        self._query.order_by(*orderings)
+        return self
+
+    def execute(self) -&gt; List[T]:
+        &#34;&#34;&#34;Execute the select statement.
+
+        Returns:
+            list: List of rows that matched the given condition.
+        &#34;&#34;&#34;
+        query = self._query.build_select(self._selected_columns)
+        rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+
+        results = []
+        for row in rows:
+            raw = {}
+            for idx, col in enumerate(self._selected_columns):
+                raw[col] = row[idx]
+
+            results.append(self._store._object_cls(**raw))
+
+        return results</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Generic</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pyfreedb.row.stmt.SelectStmt.execute"><code class="name flex">
+<span>def <span class="ident">execute</span></span>(<span>self) ‑> List[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Execute the select statement.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>List of rows that matched the given condition.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def execute(self) -&gt; List[T]:
+    &#34;&#34;&#34;Execute the select statement.
+
+    Returns:
+        list: List of rows that matched the given condition.
+    &#34;&#34;&#34;
+    query = self._query.build_select(self._selected_columns)
+    rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+
+    results = []
+    for row in rows:
+        raw = {}
+        for idx, col in enumerate(self._selected_columns):
+            raw[col] = row[idx]
+
+        results.append(self._store._object_cls(**raw))
+
+    return results</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.stmt.SelectStmt.limit"><code class="name flex">
+<span>def <span class="ident">limit</span></span>(<span>self, limit: int) ‑> <a title="pyfreedb.row.stmt.SelectStmt" href="#pyfreedb.row.stmt.SelectStmt">SelectStmt</a>[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the maximum number of rows that we're going to return.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>limit</code></strong></dt>
+<dd>Limit that we want to apply.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>SelectStatement</code></dt>
+<dd>Select statement with the limit applied.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def limit(self, limit: int) -&gt; &#34;SelectStmt[T]&#34;:
+    &#34;&#34;&#34;Defines the maximum number of rows that we&#39;re going to return.
+
+    Args:
+        limit: Limit that we want to apply.
+
+    Returns:
+        SelectStatement: Select statement with the limit applied.
+    &#34;&#34;&#34;
+    self._query.limit(limit)
+    return self</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.stmt.SelectStmt.offset"><code class="name flex">
+<span>def <span class="ident">offset</span></span>(<span>self, offset: int) ‑> <a title="pyfreedb.row.stmt.SelectStmt" href="#pyfreedb.row.stmt.SelectStmt">SelectStmt</a>[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the offset of the returned rows.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>offset</code></strong></dt>
+<dd>Offset that we want to apply.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>SelectStatement</code></dt>
+<dd>Select statement with the offset applied.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def offset(self, offset: int) -&gt; &#34;SelectStmt[T]&#34;:
+    &#34;&#34;&#34;Defines the offset of the returned rows.
+
+    Args:
+        offset: Offset that we want to apply.
+
+    Returns:
+        SelectStatement: Select statement with the offset applied.
+    &#34;&#34;&#34;
+    self._query.offset(offset)
+    return self</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.stmt.SelectStmt.order_by"><code class="name flex">
+<span>def <span class="ident">order_by</span></span>(<span>self, *orderings: <a title="pyfreedb.row.base.Ordering" href="base.html#pyfreedb.row.base.Ordering">Ordering</a>) ‑> <a title="pyfreedb.row.stmt.SelectStmt" href="#pyfreedb.row.stmt.SelectStmt">SelectStmt</a>[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Defines the column ordering of the returned rows.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>*orderings</code></strong></dt>
+<dd>The column ordering that we want to apply.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="pyfreedb.row.stmt.SelectStmt" href="#pyfreedb.row.stmt.SelectStmt">SelectStmt</a></code></dt>
+<dd>Select statement with the column ordering applied.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def order_by(self, *orderings: Ordering) -&gt; &#34;SelectStmt[T]&#34;:
+    &#34;&#34;&#34;Defines the column ordering of the returned rows.
+
+    Args:
+        *orderings: The column ordering that we want to apply.
+
+    Returns:
+        SelectStmt: Select statement with the column ordering applied.
+    &#34;&#34;&#34;
+    self._query.order_by(*orderings)
+    return self</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.stmt.SelectStmt.where"><code class="name flex">
+<span>def <span class="ident">where</span></span>(<span>self, condition: str, *args: Any) ‑> <a title="pyfreedb.row.stmt.SelectStmt" href="#pyfreedb.row.stmt.SelectStmt">SelectStmt</a>[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filter the rows that we're going to get.</p>
+<p>The given <code>condition</code> will be used as the WHERE clause on the final query. You can use <code>"?"</code> placeholder
+inside the condition and will be replaced with the actual value given in the <code>*args</code> variadic parameter
+based on their appearance ordering.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>condition</code></strong></dt>
+<dd>Conditions of the data that we're going to get.</dd>
+<dt><strong><code>*args</code></strong></dt>
+<dd>List of arguments that will be used to fill in the placeholders in the given <code>condition</code>.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="pyfreedb.row.stmt.SelectStmt" href="#pyfreedb.row.stmt.SelectStmt">SelectStmt</a></code></dt>
+<dd>The select statement with the given WHERE condition applied.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<p>To apply "WHERE age &gt; 10" filter on the select statement:</p>
+<blockquote>
+<blockquote>
+<p>len(store.select().where("age &gt; ?", 10).execute())
+10</p>
+</blockquote>
+</blockquote></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def where(self, condition: str, *args: Any) -&gt; &#34;SelectStmt[T]&#34;:
+    &#34;&#34;&#34;Filter the rows that we&#39;re going to get.
+
+    The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+    inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+    based on their appearance ordering.
+
+    Args:
+        condition: Conditions of the data that we&#39;re going to get.
+        *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+    Returns:
+        SelectStmt: The select statement with the given WHERE condition applied.
+
+    Examples:
+        To apply &#34;WHERE age &gt; 10&#34; filter on the select statement:
+
+        &gt;&gt; len(store.select().where(&#34;age &gt; ?&#34;, 10).execute())
+        10
+    &#34;&#34;&#34;
+    self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+    return self</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="pyfreedb.row.stmt.UpdateStmt"><code class="flex name class">
+<span>class <span class="ident">UpdateStmt</span></span>
+<span>(</span><span>store: GoogleSheetRowStore[T], update_values: Dict[str, str])</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialise statement for updating rows.</p>
+<p>Client should not instantiate this class directly, instead use <code>store.update()</code> to instantiate it.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class UpdateStmt(Generic[T]):
+    def __init__(self, store: &#34;GoogleSheetRowStore[T]&#34;, update_values: Dict[str, str]):
+        &#34;&#34;&#34;Initialise statement for updating rows.
+
+        Client should not instantiate this class directly, instead use `store.update()` to instantiate it.
+        &#34;&#34;&#34;
+        self._store = store
+        self._update_values = update_values
+        self._query = store._new_query_builder()
+
+    def where(self, condition: str, *args: Any) -&gt; &#34;UpdateStmt[T]&#34;:
+        &#34;&#34;&#34;Filter the rows that we&#39;re going to update.
+
+        The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+        inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+        based on their appearance ordering.
+
+        Args:
+            condition: Conditions of the data that we&#39;re going to update.
+            *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+        Returns:
+            UpdateStmt: The delete statement with the given WHERE condition applied.
+
+        Examples:
+            To apply &#34;WHERE age &gt; 10&#34; filter on the update statement:
+
+            &gt;&gt; store.update({&#34;name&#34;: &#34;cat&#34;}).where(&#34;age &gt; ?&#34;, 10).execute()
+            10
+        &#34;&#34;&#34;
+        self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+        return self
+
+    def execute(self) -&gt; int:
+        &#34;&#34;&#34;Execute the update statement.
+
+        Returns:
+            int: The number of updated rows.
+        &#34;&#34;&#34;
+        query = self._query.build_select([self._store._RID_COLUMN_NAME])
+        affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+        update_candidate_indices = [int(row[0]) for row in affected_rows]
+
+        self._update_rows(update_candidate_indices)
+
+        return len(update_candidate_indices)
+
+    def _update_rows(self, indices: List[int]) -&gt; None:
+        requests = []
+        for row_idx in indices:
+            for col_idx, col in enumerate(self._store._object_cls._fields.keys()):
+                if col not in self._update_values:
+                    continue
+
+                cell_selector = _A1CellSelector.from_rc(col_idx + 2, row_idx)
+                update_range = _A1Range(self._store._sheet_name, cell_selector, cell_selector)
+                requests.append(_BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
+
+        self._store._wrapper.batch_update_rows(self._store._spreadsheet_id, requests)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>typing.Generic</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="pyfreedb.row.stmt.UpdateStmt.execute"><code class="name flex">
+<span>def <span class="ident">execute</span></span>(<span>self) ‑> int</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Execute the update statement.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>The number of updated rows.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def execute(self) -&gt; int:
+    &#34;&#34;&#34;Execute the update statement.
+
+    Returns:
+        int: The number of updated rows.
+    &#34;&#34;&#34;
+    query = self._query.build_select([self._store._RID_COLUMN_NAME])
+    affected_rows = self._store._wrapper.query(self._store._spreadsheet_id, self._store._sheet_name, query)
+    update_candidate_indices = [int(row[0]) for row in affected_rows]
+
+    self._update_rows(update_candidate_indices)
+
+    return len(update_candidate_indices)</code></pre>
+</details>
+</dd>
+<dt id="pyfreedb.row.stmt.UpdateStmt.where"><code class="name flex">
+<span>def <span class="ident">where</span></span>(<span>self, condition: str, *args: Any) ‑> <a title="pyfreedb.row.stmt.UpdateStmt" href="#pyfreedb.row.stmt.UpdateStmt">UpdateStmt</a>[~T]</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filter the rows that we're going to update.</p>
+<p>The given <code>condition</code> will be used as the WHERE clause on the final query. You can use <code>"?"</code> placeholder
+inside the condition and will be replaced with the actual value given in the <code>*args</code> variadic parameter
+based on their appearance ordering.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>condition</code></strong></dt>
+<dd>Conditions of the data that we're going to update.</dd>
+<dt><strong><code>*args</code></strong></dt>
+<dd>List of arguments that will be used to fill in the placeholders in the given <code>condition</code>.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="pyfreedb.row.stmt.UpdateStmt" href="#pyfreedb.row.stmt.UpdateStmt">UpdateStmt</a></code></dt>
+<dd>The delete statement with the given WHERE condition applied.</dd>
+</dl>
+<h2 id="examples">Examples</h2>
+<p>To apply "WHERE age &gt; 10" filter on the update statement:</p>
+<blockquote>
+<blockquote>
+<p>store.update({"name": "cat"}).where("age &gt; ?", 10).execute()
+10</p>
+</blockquote>
+</blockquote></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def where(self, condition: str, *args: Any) -&gt; &#34;UpdateStmt[T]&#34;:
+    &#34;&#34;&#34;Filter the rows that we&#39;re going to update.
+
+    The given `condition` will be used as the WHERE clause on the final query. You can use `&#34;?&#34;` placeholder
+    inside the condition and will be replaced with the actual value given in the `*args` variadic parameter
+    based on their appearance ordering.
+
+    Args:
+        condition: Conditions of the data that we&#39;re going to update.
+        *args: List of arguments that will be used to fill in the placeholders in the given `condition`.
+
+    Returns:
+        UpdateStmt: The delete statement with the given WHERE condition applied.
+
+    Examples:
+        To apply &#34;WHERE age &gt; 10&#34; filter on the update statement:
+
+        &gt;&gt; store.update({&#34;name&#34;: &#34;cat&#34;}).where(&#34;age &gt; ?&#34;, 10).execute()
+        10
+    &#34;&#34;&#34;
+    self._query.where(f&#34;{self._store._WHERE_DEFAULT_CLAUSE} AND {condition}&#34;, *args)
+    return self</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pyfreedb.row" href="index.html">pyfreedb.row</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="pyfreedb.row.stmt.CountStmt" href="#pyfreedb.row.stmt.CountStmt">CountStmt</a></code></h4>
+<ul class="">
+<li><code><a title="pyfreedb.row.stmt.CountStmt.execute" href="#pyfreedb.row.stmt.CountStmt.execute">execute</a></code></li>
+<li><code><a title="pyfreedb.row.stmt.CountStmt.where" href="#pyfreedb.row.stmt.CountStmt.where">where</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.stmt.DeleteStmt" href="#pyfreedb.row.stmt.DeleteStmt">DeleteStmt</a></code></h4>
+<ul class="">
+<li><code><a title="pyfreedb.row.stmt.DeleteStmt.execute" href="#pyfreedb.row.stmt.DeleteStmt.execute">execute</a></code></li>
+<li><code><a title="pyfreedb.row.stmt.DeleteStmt.where" href="#pyfreedb.row.stmt.DeleteStmt.where">where</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.stmt.InsertStmt" href="#pyfreedb.row.stmt.InsertStmt">InsertStmt</a></code></h4>
+<ul class="">
+<li><code><a title="pyfreedb.row.stmt.InsertStmt.execute" href="#pyfreedb.row.stmt.InsertStmt.execute">execute</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.stmt.SelectStmt" href="#pyfreedb.row.stmt.SelectStmt">SelectStmt</a></code></h4>
+<ul class="">
+<li><code><a title="pyfreedb.row.stmt.SelectStmt.execute" href="#pyfreedb.row.stmt.SelectStmt.execute">execute</a></code></li>
+<li><code><a title="pyfreedb.row.stmt.SelectStmt.limit" href="#pyfreedb.row.stmt.SelectStmt.limit">limit</a></code></li>
+<li><code><a title="pyfreedb.row.stmt.SelectStmt.offset" href="#pyfreedb.row.stmt.SelectStmt.offset">offset</a></code></li>
+<li><code><a title="pyfreedb.row.stmt.SelectStmt.order_by" href="#pyfreedb.row.stmt.SelectStmt.order_by">order_by</a></code></li>
+<li><code><a title="pyfreedb.row.stmt.SelectStmt.where" href="#pyfreedb.row.stmt.SelectStmt.where">where</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="pyfreedb.row.stmt.UpdateStmt" href="#pyfreedb.row.stmt.UpdateStmt">UpdateStmt</a></code></h4>
+<ul class="">
+<li><code><a title="pyfreedb.row.stmt.UpdateStmt.execute" href="#pyfreedb.row.stmt.UpdateStmt.execute">execute</a></code></li>
+<li><code><a title="pyfreedb.row.stmt.UpdateStmt.where" href="#pyfreedb.row.stmt.UpdateStmt.where">where</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>

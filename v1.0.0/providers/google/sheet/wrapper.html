@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.10.0" />
+<title>pyfreedb.providers.google.sheet.wrapper API documentation</title>
+<meta name="description" content="" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>pyfreedb.providers.google.sheet.wrapper</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import json
+from typing import Any, Dict, List, Union
+
+import requests
+from googleapiclient.discovery import build
+
+from pyfreedb.providers.google.auth.base import GoogleAuthClient
+
+from .base import _A1Range, _BatchUpdateRowsRequest, _InsertRowsResult, _UpdateRowsResult
+
+
+class _GoogleSheetWrapper:
+    APPEND_MODE_OVERWRITE = &#34;OVERWRITE&#34;
+    APPEND_MODE_INSERT = &#34;INSERT_ROWS&#34;
+    MAJOR_DIMENSION_ROWS = &#34;ROWS&#34;
+    VALUE_RENDER_FORMATTED_VALUE = &#34;FORMATTED_VALUE&#34;
+    VALUE_INPUT_USER_ENTERED = &#34;USER_ENTERED&#34;
+
+    def __init__(self, auth_client: GoogleAuthClient):
+        service = build(&#34;sheets&#34;, &#34;v4&#34;, credentials=auth_client.credentials())
+        self._auth_client = auth_client
+        self._svc = service.spreadsheets()
+
+    def create_spreadsheet(self, title: str) -&gt; str:
+        resp = self._svc.create(body={&#34;properties&#34;: {&#34;title&#34;: title}}).execute()
+        return str(resp[&#34;spreadsheetId&#34;])
+
+    def create_sheet(self, spreadsheet_id: str, sheet_name: str) -&gt; str:
+        resp = self._svc.batchUpdate(
+            spreadsheetId=spreadsheet_id, body={&#34;requests&#34;: {&#34;addSheet&#34;: {&#34;properties&#34;: {&#34;title&#34;: sheet_name}}}}
+        ).execute()
+        return str(resp[&#34;replies&#34;][0][&#34;addSheet&#34;][&#34;properties&#34;][&#34;sheetId&#34;])
+
+    def delete_sheet(self, spreadsheet_id: str, sheet_id: str) -&gt; None:
+        self._svc.batchUpdate(
+            spreadsheetId=spreadsheet_id, body={&#34;requests&#34;: {&#34;deleteSheet&#34;: {&#34;sheetId&#34;: sheet_id}}}
+        ).execute()
+
+    def insert_rows(self, spreadsheet_id: str, range: _A1Range, values: List[List[Any]]) -&gt; _InsertRowsResult:
+        return self._insert_rows(spreadsheet_id, range, values, self.APPEND_MODE_INSERT)
+
+    def overwrite_rows(self, spreadsheet_id: str, range: _A1Range, values: List[List[Any]]) -&gt; _InsertRowsResult:
+        return self._insert_rows(spreadsheet_id, range, values, self.APPEND_MODE_OVERWRITE)
+
+    def _insert_rows(
+        self, spreadsheet_id: str, a1_range: _A1Range, values: List[List[Any]], mode: str
+    ) -&gt; _InsertRowsResult:
+        resp = (
+            self._svc.values()
+            .append(
+                spreadsheetId=spreadsheet_id,
+                range=str(a1_range),
+                insertDataOption=mode,
+                includeValuesInResponse=&#34;true&#34;,
+                responseValueRenderOption=self.VALUE_RENDER_FORMATTED_VALUE,
+                valueInputOption=self.VALUE_INPUT_USER_ENTERED,
+                body={&#34;values&#34;: values},
+            )
+            .execute()
+        )
+
+        return _InsertRowsResult(
+            updated_range=_A1Range.from_notation(resp[&#34;updates&#34;][&#34;updatedData&#34;][&#34;range&#34;]),
+            updated_rows=resp[&#34;updates&#34;][&#34;updatedRows&#34;],
+            updated_columns=resp[&#34;updates&#34;][&#34;updatedColumns&#34;],
+            updated_cells=resp[&#34;updates&#34;][&#34;updatedCells&#34;],
+            inserted_values=resp[&#34;updates&#34;][&#34;updatedData&#34;][&#34;values&#34;],
+        )
+
+    def clear(self, spreadsheet_id: str, ranges: List[_A1Range]) -&gt; None:
+        self._svc.values().batchClear(spreadsheetId=spreadsheet_id, body={&#34;ranges&#34;: [str(r) for r in ranges]}).execute()
+
+    def update_rows(self, spreadsheet_id: str, a1_range: _A1Range, values: List[List[Any]]) -&gt; _UpdateRowsResult:
+        resp = (
+            self._svc.values().update(
+                spreadsheetId=spreadsheet_id,
+                range=str(a1_range),
+                includeValuesInResponse=&#34;true&#34;,
+                responseValueRenderOption=&#34;FORMATTED_VALUE&#34;,
+                valueInputOption=&#34;USER_ENTERED&#34;,
+                body={&#34;majorDimension&#34;: self.MAJOR_DIMENSION_ROWS, &#34;range&#34;: str(a1_range), &#34;values&#34;: values},
+            )
+        ).execute()
+
+        return _UpdateRowsResult(
+            updated_range=_A1Range.from_notation(resp[&#34;updatedRange&#34;]),
+            updated_rows=resp[&#34;updatedRows&#34;],
+            updated_columns=resp[&#34;updatedColumns&#34;],
+            updated_cells=resp[&#34;updatedCells&#34;],
+            updated_values=resp[&#34;updatedData&#34;].get(&#34;values&#34;, []),
+        )
+
+    def batch_update_rows(
+        self, spreadsheet_id: str, requests: List[_BatchUpdateRowsRequest]
+    ) -&gt; List[_UpdateRowsResult]:
+        resp = (
+            self._svc.values()
+            .batchUpdate(
+                spreadsheetId=spreadsheet_id,
+                body={
+                    &#34;includeValuesInResponse&#34;: True,
+                    &#34;responseValueRenderOption&#34;: &#34;FORMATTED_VALUE&#34;,
+                    &#34;valueInputOption&#34;: &#34;USER_ENTERED&#34;,
+                    &#34;data&#34;: [
+                        {
+                            &#34;majorDimension&#34;: self.MAJOR_DIMENSION_ROWS,
+                            &#34;range&#34;: str(req.range),
+                            &#34;values&#34;: req.values,
+                        }
+                        for req in requests
+                    ],
+                },
+            )
+            .execute()
+        )
+
+        results = []
+        for response in resp[&#34;responses&#34;]:
+            results.append(
+                _UpdateRowsResult(
+                    updated_range=_A1Range.from_notation(response[&#34;updatedRange&#34;]),
+                    updated_rows=response[&#34;updatedRows&#34;],
+                    updated_columns=response[&#34;updatedColumns&#34;],
+                    updated_cells=response[&#34;updatedCells&#34;],
+                    updated_values=response[&#34;updatedData&#34;].get(&#34;values&#34;, []),
+                )
+            )
+
+        return results
+
+    def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -&gt; List[List[Any]]:
+        auth_token = &#34;Bearer &#34; + self._auth_client.credentials().token
+        headers = {&#34;contentType&#34;: &#34;application/json&#34;, &#34;Authorization&#34;: auth_token}
+
+        params: Dict[str, Union[str, int]] = {
+            &#34;sheet&#34;: sheet_name,
+            &#34;tqx&#34;: &#34;responseHandler:freeleh&#34;,
+            &#34;tq&#34;: query,
+            &#34;headers&#34;: 1 if has_header else 0,
+        }
+
+        url = &#34;https://docs.google.com/spreadsheets/d/{}/gviz/tq&#34;.format(spreadsheet_id)
+        r = requests.get(url=url, params=params, headers=headers)
+        r.raise_for_status()
+        return self._convert_query_result(r.text)
+
+    def _convert_query_result(self, response: str) -&gt; List[List[Any]]:
+        # Remove the schema header -&gt; freeleh({...}).
+        # We only care about the JSON inside of the bracket.
+        start, end = response.index(&#34;{&#34;), response.rindex(&#34;}&#34;)
+        resp = json.loads(response[start : end + 1])
+        cols = resp[&#34;table&#34;][&#34;cols&#34;]
+        rows = resp[&#34;table&#34;][&#34;rows&#34;]
+
+        results = []
+        for row in rows:
+            result_row = []
+            for cell_idx, cell in enumerate(row[&#34;c&#34;]):
+                if not cell:
+                    continue
+
+                col = cols[cell_idx]
+                result_row.append(self._parse_cell(cell, col))
+            results.append(result_row)
+        return results
+
+    def _parse_cell(self, cell: Dict[str, str], col: Dict[str, str]) -&gt; Any:
+        # We might get null if the current cell is empty.
+        if not cell or cell[&#34;v&#34;] is None:
+            return None
+
+        typ = col[&#34;type&#34;]
+        if typ == &#34;boolean&#34;:
+            return cell[&#34;v&#34;]
+        elif typ == &#34;number&#34;:
+            if &#34;f&#34; in cell:
+                if &#34;.&#34; in cell[&#34;f&#34;]:
+                    return float(cell[&#34;f&#34;])
+
+                return int(cell[&#34;f&#34;])
+
+            # Computed data doesn&#39;t have raw value, number returned from aggregation will doesn&#39;t have `f`.
+            return int(cell[&#34;v&#34;])
+        elif typ == &#34;string&#34;:
+            return cell[&#34;v&#34;]
+        elif typ in [&#34;date&#34;, &#34;datetime&#34;, &#34;timeofday&#34;]:
+            return cell[&#34;f&#34;]
+
+        raise ValueError(&#34;cell type {} is not supported&#34;.format(typ))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="pyfreedb.providers.google.sheet" href="index.html">pyfreedb.providers.google.sheet</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
+</footer>
+</body>
+</html>
