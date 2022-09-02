@@ -3,8 +3,10 @@
 <br />
 
 <div align="center">
-	<img width="200" src="docs/img/logo_light.png#gh-light-mode-only">
-    <img width="200" src="docs/img/logo_dark.png#gh-dark-mode-only">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="docs/img/logo_dark.png">
+		<img width=200 src="docs/img/logo_light.png">
+	</picture>
 	<h3><i>Ship Faster with Google Sheets as a Database!</i></h3>
 </div>
 
@@ -18,6 +20,7 @@
 
 ![Unit Test](https://github.com/FreeLeh/PyFreeDB/actions/workflows/unit_test.yml/badge.svg)
 ![Integration Test](https://github.com/FreeLeh/PyFreeDB/actions/workflows/integration_test.yml/badge.svg)
+[![Documentation](https://img.shields.io/badge/Documentation-PyFreeDB-blue)](https://freeleh.github.io/PyFreeDB/latest)
 
 </div>
 
