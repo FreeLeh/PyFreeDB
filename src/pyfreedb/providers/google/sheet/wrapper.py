@@ -142,6 +142,7 @@ class _GoogleSheetWrapper:
         url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
         r = requests.get(url=url, params=params, headers=headers)
         r.raise_for_status()
+        print(r.text)
         return self._convert_query_result(r.text)
 
     def _convert_query_result(self, response: str) -> List[List[Any]]:
@@ -173,17 +174,14 @@ class _GoogleSheetWrapper:
         if typ == "boolean":
             return cell["v"]
         elif typ == "number":
-            if "f" in cell:
-                if "." in cell["f"]:
-                    return float(cell["f"])
-
-                return int(cell["f"])
-
-            # Computed data doesn't have raw value, number returned from aggregation will doesn't have `f`.
-            return int(cell["v"])
+            # Internally, google sheet represent number according to IEEE-754.
+            # If the actual value is outside the supported range it will be truncated.
+            return cell["v"]
         elif typ == "string":
             return cell["v"]
         elif typ in ["date", "datetime", "timeofday"]:
+            # By right we will not reach this case because it's impossible for data created by this library
+            # to be typecasted to Date/Datetime/Timeofday.
             return cell["f"]
 
         raise ValueError("cell type {} is not supported".format(typ))

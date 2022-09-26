@@ -36,14 +36,19 @@ class _Field(Generic[T]):
 
     def __set__(self, obj: Any, value: Optional[T]) -> None:
         self.__ensure_type(value)
-        return setattr(obj._data, self._field_name, value)
+        return setattr(obj._data, self._field_name, self._typ(value))
 
     def __ensure_type(self, value: Any) -> None:
         if value is None or value is NotSet:
             return
 
-        if not isinstance(value, self._typ):
-            raise TypeError(f"value of field {self._field_name} has the wrong type")
+        if self._typ is int or self._typ is float and isinstance(value, (int, float)):
+            return
+
+        if isinstance(value, self._typ):
+            return
+
+        raise TypeError(f"value of field {self._field_name} has the wrong type")
 
 
 class IntegerField(_Field[int]):

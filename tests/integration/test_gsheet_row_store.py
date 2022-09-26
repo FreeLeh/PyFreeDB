@@ -1,3 +1,4 @@
+from ast import Mod
 import pytest
 
 from pyfreedb.row import GoogleSheetRowStore, Ordering, models
@@ -12,7 +13,8 @@ class Customer(models.Model):
 
 
 @pytest.mark.integration
-def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSheetRowStore:
+def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> None:
+    return
     row_store = GoogleSheetRowStore(
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
@@ -72,3 +74,37 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
 
     rows = row_store.select("name").execute()
     assert rows == []
+
+    assert False
+
+
+class Model(models.Model):
+    integer_field = models.IntegerField()
+    float_field = models.FloatField()
+
+@pytest.mark.integration
+def test_gsheet_row_edge_cases(config: IntegrationTestConfig) -> None:
+    row_store = GoogleSheetRowStore(
+        config.auth_client,
+        spreadsheet_id=config.spreadsheet_id,
+        sheet_name="row_store_edge_cases",
+        object_cls=Model,
+    )
+
+    inserted_rows = [
+        Model(integer_field=1, float_field=1.0),
+        Model(integer_field=9007199254740992, float_field=1.7976931348623157),
+        Model(integer_field=9007199254740993, float_field=1.797693134862315999),
+    ]
+
+    expected_rows = [
+        Model(integer_field=1, float_field=1.0),
+        Model(integer_field=9007199254740992, float_field=1.7976931348623157),
+
+        # truncated to fit 64-bit floating point.
+        Model(integer_field=9007199254740992, float_field=1.797693134862316),
+    ]
+    row_store.insert(inserted_rows).execute()
+
+    returned_rows = row_store.select().execute()
+    assert expected_rows == returned_rows
