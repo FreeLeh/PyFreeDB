@@ -1,6 +1,4 @@
 import dataclasses
-from multiprocessing.sharedctypes import Value
-from re import L
 from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union, cast
 
 
@@ -39,7 +37,7 @@ class _Field(Generic[T]):
     def __set__(self, obj: Any, value: Optional[T]) -> None:
         self.__ensure_type(value)
         if value is not NotSet:
-            value = self._typ(value)
+            value = self._typ(value)  # type: ignore [call-arg]
 
         return setattr(obj._data, self._field_name, value)
 
@@ -64,7 +62,6 @@ class _Field(Generic[T]):
             return True
 
         return False
-
 
 
 class IntegerField(_Field[int]):
@@ -159,6 +156,7 @@ class Model(metaclass=_Meta):
 
 def _is_ieee754_safe_integer(value: int) -> bool:
     return -(1 << 53) <= value <= (1 << 53)
+
 
 __pydoc__ = {}
 __pydoc__["StringField"] = StringField.__doc__

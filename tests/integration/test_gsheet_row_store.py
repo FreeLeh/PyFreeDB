@@ -1,4 +1,3 @@
-from ast import Mod
 import pytest
 
 from pyfreedb.row import GoogleSheetRowStore, Ordering, models
@@ -82,6 +81,7 @@ class Model(models.Model):
     integer_field = models.IntegerField()
     float_field = models.FloatField()
 
+
 @pytest.mark.integration
 def test_gsheet_row_edge_cases(config: IntegrationTestConfig) -> None:
     row_store = GoogleSheetRowStore(
@@ -100,7 +100,6 @@ def test_gsheet_row_edge_cases(config: IntegrationTestConfig) -> None:
     expected_rows = [
         Model(integer_field=1, float_field=1.0),
         Model(integer_field=9007199254740992, float_field=1.7976931348623157),
-
         # truncated to fit 64-bit floating point.
         Model(integer_field=9007199254740992, float_field=1.797693134862316),
     ]

@@ -309,7 +309,7 @@ class DeleteStmt(Generic[T]):
         self._store._wrapper.clear(self._store._spreadsheet_id, requests)
 
 
-def _escape_val(val):
+def _escape_val(val: Any) -> Any:
     # When the sheet is created all cells's data format will be set to automatic.
     # All data must be escaped to prevent the data "autocasted" by gsheet to other types since we insert them with
     # USER_ENTERED option.
