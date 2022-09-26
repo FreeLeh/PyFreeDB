@@ -13,7 +13,6 @@ class Customer(models.Model):
 
 @pytest.mark.integration
 def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> None:
-    return
     row_store = GoogleSheetRowStore(
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
@@ -74,8 +73,6 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> None:
     rows = row_store.select("name").execute()
     assert rows == []
 
-    assert False
-
 
 class Model(models.Model):
     integer_field = models.IntegerField()
@@ -94,16 +91,22 @@ def test_gsheet_row_edge_cases(config: IntegrationTestConfig) -> None:
     inserted_rows = [
         Model(integer_field=1, float_field=1.0),
         Model(integer_field=9007199254740992, float_field=1.7976931348623157),
-        Model(integer_field=9007199254740993, float_field=1.797693134862315999),
     ]
+    row_store.insert(inserted_rows).execute()
 
     expected_rows = [
         Model(integer_field=1, float_field=1.0),
         Model(integer_field=9007199254740992, float_field=1.7976931348623157),
-        # truncated to fit 64-bit floating point.
-        Model(integer_field=9007199254740992, float_field=1.797693134862316),
     ]
-    row_store.insert(inserted_rows).execute()
-
     returned_rows = row_store.select().execute()
     assert expected_rows == returned_rows
+
+    affected_rows = (
+        row_store.update({"integer_field": expected_rows[1].integer_field, "float_field": expected_rows[1].float_field})
+        .where("integer_field = ?", 1)
+        .execute()
+    )
+    assert 1 == affected_rows
+
+    returned_rows = row_store.select().limit(1).execute()
+    assert [expected_rows[1]] == returned_rows

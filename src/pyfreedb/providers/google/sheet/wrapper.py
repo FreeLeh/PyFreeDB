@@ -142,7 +142,6 @@ class _GoogleSheetWrapper:
         url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
         r = requests.get(url=url, params=params, headers=headers)
         r.raise_for_status()
-        print(r.text)
         return self._convert_query_result(r.text)
 
     def _convert_query_result(self, response: str) -> List[List[Any]]:
