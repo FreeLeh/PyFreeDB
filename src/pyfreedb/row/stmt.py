@@ -184,7 +184,8 @@ class InsertStmt(Generic[T]):
             raw = ["=ROW()"]
 
             for field_name in row._fields:
-                raw.append(getattr(row, field_name))
+                value = _escape_val(getattr(row, field_name))
+                raw.append(value)
 
             raw_values.append(raw)
 
@@ -245,9 +246,10 @@ class UpdateStmt(Generic[T]):
                 if col not in self._update_values:
                     continue
 
+                value = _escape_val(self._update_values[col])
                 cell_selector = _A1CellSelector.from_rc(col_idx + 2, row_idx)
                 update_range = _A1Range(self._store._sheet_name, cell_selector, cell_selector)
-                requests.append(_BatchUpdateRowsRequest(update_range, [[self._update_values[col]]]))
+                requests.append(_BatchUpdateRowsRequest(update_range, [[value]]))
 
         self._store._wrapper.batch_update_rows(self._store._spreadsheet_id, requests)
 
@@ -305,6 +307,17 @@ class DeleteStmt(Generic[T]):
             requests.append(_A1Range(self._store._sheet_name, start=row_selector, end=row_selector))
 
         self._store._wrapper.clear(self._store._spreadsheet_id, requests)
+
+
+def _escape_val(val):
+    # When the sheet is created all cells's data format will be set to automatic.
+    # All data must be escaped to prevent the data "autocasted" by gsheet to other types since we insert them with
+    # USER_ENTERED option.
+    # e.g. val == "1" will be interpreted as Number and "2020-1-1" will be interpreted as Date.
+    if isinstance(val, str):
+        return f"'{val}"
+
+    return val
 
 
 __pdoc__ = {}

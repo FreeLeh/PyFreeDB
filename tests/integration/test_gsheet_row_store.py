@@ -27,9 +27,9 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
 
     # Insert some data, expects no exception raised.
     rows = [
-        Customer(name="name1", age=10, dob="1-1-1999"),
-        Customer(name="name2", age=11, dob="1-1-2000"),
-        Customer(name="name3", age=12, dob="1-1-2001"),
+        Customer(name="name1", age=10, dob="1999-01-01"),
+        Customer(name="name2", age=11, dob="2000-01-01"),
+        Customer(name="name3", age=12, dob="2001-01-01"),
     ]
     row_store.insert(rows).execute()
 
@@ -41,12 +41,15 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
     rows = row_store.select("name", "age").where("age < ? AND age > ?", 12, 10).execute()
     assert rows == [Customer(name="name2", age=11)]
 
+    rows = row_store.select().where("dob = ?", "1999-01-01").execute()
+    assert rows == [Customer(name="name1", age=10, dob="1999-01-01")]
+
     # Update one of the row, expects only 1 rows that changed.
     rows_changed = row_store.update({"name": "name4"}).where("age = ?", 10).execute()
     assert rows_changed == 1
 
     # If no where clause, update all.
-    rows_changed = row_store.update({"dob": "1-1-2002"}).execute()
+    rows_changed = row_store.update({"dob": "2002-01-01"}).execute()
     assert rows_changed == 3
 
     # It should reflect the previous update and return in descending order by age.
