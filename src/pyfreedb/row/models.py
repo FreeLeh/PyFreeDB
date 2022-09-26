@@ -1,4 +1,6 @@
 import dataclasses
+from multiprocessing.sharedctypes import Value
+from re import L
 from typing import Any, Dict, Generic, Optional, Type, TypeVar, Union, cast
 
 
@@ -36,19 +38,33 @@ class _Field(Generic[T]):
 
     def __set__(self, obj: Any, value: Optional[T]) -> None:
         self.__ensure_type(value)
-        return setattr(obj._data, self._field_name, self._typ(value))
+        if value is not NotSet:
+            value = self._typ(value)
+
+        return setattr(obj._data, self._field_name, value)
 
     def __ensure_type(self, value: Any) -> None:
         if value is None or value is NotSet:
             return
 
-        if self._typ is int or self._typ is float and isinstance(value, (int, float)):
+        should_return = self.__ensure_number_types(value)
+        if should_return:
             return
 
         if isinstance(value, self._typ):
             return
 
         raise TypeError(f"value of field {self._field_name} has the wrong type")
+
+    def __ensure_number_types(self, value: Any) -> bool:
+        if self._typ is int and not _is_ieee754_safe_integer(value):
+            raise ValueError("f{value} can't be exactly stored as number. Use string instead to avoid precision loss.")
+
+        if self._typ is int or self._typ is float and isinstance(value, (int, float)):
+            return True
+
+        return False
+
 
 
 class IntegerField(_Field[int]):
@@ -140,6 +156,9 @@ class Model(metaclass=_Meta):
             # Trigger the validation by reassigning the value to itself.
             setattr(self, field, getattr(self, field))
 
+
+def _is_ieee754_safe_integer(value: int) -> bool:
+    return -(1 << 53) <= value <= (1 << 53)
 
 __pydoc__ = {}
 __pydoc__["StringField"] = StringField.__doc__

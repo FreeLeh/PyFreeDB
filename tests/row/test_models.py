@@ -71,3 +71,18 @@ def test_model_type_check() -> None:
         pytest.fail("should raise TypeError")
     except TypeError:
         pass
+
+def test_boundary() -> None:
+    try:
+        a = A(integer_field=1<<54)
+        pytest.fail("should raise ValueError")
+    except ValueError:
+        pass
+
+
+def test_is_ieee754_safe_integer():
+    assert models._is_ieee754_safe_integer(0)
+    assert models._is_ieee754_safe_integer(-9007199254740992)
+    assert not models._is_ieee754_safe_integer(-9007199254740993)
+    assert models._is_ieee754_safe_integer(9007199254740992)
+    assert not models._is_ieee754_safe_integer(9007199254740993)
