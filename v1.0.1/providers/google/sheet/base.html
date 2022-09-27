@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>pyfreedb API documentation</title>
-<meta name="description" content="PyFreeDB is a Python library that provides common and simple database abstractions on top of Google Sheets." />
+<title>pyfreedb.providers.google.sheet.base API documentation</title>
+<meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,43 +19,131 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Package <code>pyfreedb</code></h1>
+<h1 class="title">Module <code>pyfreedb.providers.google.sheet.base</code></h1>
 </header>
 <section id="section-intro">
-<p>PyFreeDB is a Python library that provides common and simple database abstractions on top of Google Sheets.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">&#34;&#34;&#34;PyFreeDB is a Python library that provides common and simple database abstractions on top of Google Sheets.&#34;&#34;&#34;
+<pre><code class="python">import string
+from dataclasses import dataclass
+from typing import Any, List, Optional
 
-__version__ = &#34;1.0.1&#34;</code></pre>
+
+def _to_a1_column(col_idx: int) -&gt; str:
+    result = []
+    while col_idx:
+        cur = (col_idx - 1) % 26
+        result.append(string.ascii_uppercase[cur])
+        col_idx = (col_idx - cur) // 26
+
+    return &#34;&#34;.join(result[::-1])
+
+
+@dataclass
+class _A1CellSelector:
+    # &#34;&#34; means we select the entire column.
+    column: str = &#34;&#34;
+    # 0 means we select the entire row.
+    row: int = 0
+
+    @classmethod
+    def from_rc(cls, column: int = 0, row: int = 0) -&gt; &#34;_A1CellSelector&#34;:
+        column_str = &#34;&#34;
+        if column:
+            column_str = _to_a1_column(column)
+
+        return cls(row=row, column=column_str)
+
+    @classmethod
+    def from_notation(cls, notation: str) -&gt; &#34;_A1CellSelector&#34;:
+        column, row = notation, 0
+
+        for i, c in enumerate(notation):
+            if c.isdigit():
+                column = notation[:i]
+                row = int(notation[i:])
+                break
+
+        return cls(row=row, column=column)
+
+    def __str__(self) -&gt; str:
+        row = &#34;&#34;
+        if self.row:
+            row = str(self.row)
+
+        return self.column + row
+
+
+@dataclass
+class _A1Range:
+    sheet_name: str = &#34;&#34;
+    # If both start and end equals to None, means that the range refers to all cells.
+    start: Optional[_A1CellSelector] = None
+    end: Optional[_A1CellSelector] = None
+
+    @classmethod
+    def from_notation(cls, notation: str) -&gt; &#34;_A1Range&#34;:
+        sheet_name = &#34;&#34;
+        if &#34;!&#34; in notation:
+            # notation=&#34;Sheet1!A1:B2&#34; -&gt; sheet_name=Sheet1
+            exc_pos = notation.index(&#34;!&#34;)
+            sheet_name = notation[:exc_pos]
+            notation = notation[exc_pos + 1 :]
+        elif &#34;:&#34; not in notation:
+            # notation=&#34;Sheet1&#34; -&gt; sheet_name=Sheet1
+            sheet_name = notation
+            notation = &#34;&#34;
+
+        start, end = None, None
+        if notation != &#34;&#34;:
+            if &#34;:&#34; in notation:
+                start_raw, end_raw = notation.split(&#34;:&#34;)
+                start = _A1CellSelector.from_notation(start_raw)
+                end = _A1CellSelector.from_notation(end_raw)
+            else:
+                start = _A1CellSelector.from_notation(notation)
+                end = _A1CellSelector.from_notation(notation)
+
+        return cls(sheet_name=sheet_name, start=start, end=end)
+
+    def __str__(self) -&gt; str:
+        notation = []
+        if self.sheet_name:
+            notation.append(self.sheet_name)
+
+        if self.start and self.end:
+            notation.append(str(self.start) + &#34;:&#34; + str(self.end))
+
+        return &#34;!&#34;.join(notation)
+
+
+@dataclass
+class _InsertRowsResult:
+    updated_range: _A1Range
+    updated_rows: int
+    updated_columns: int
+    updated_cells: int
+    inserted_values: List[List[Any]]
+
+
+@dataclass
+class _UpdateRowsResult:
+    updated_range: _A1Range
+    updated_rows: int
+    updated_columns: int
+    updated_cells: int
+    updated_values: List[List[Any]]
+
+
+@dataclass
+class _BatchUpdateRowsRequest:
+    range: _A1Range
+    values: List[List[Any]]</code></pre>
 </details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
-<dl>
-<dt><code class="name"><a title="pyfreedb.base" href="base.html">pyfreedb.base</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="pyfreedb.codec" href="codec.html">pyfreedb.codec</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="pyfreedb.kv" href="kv/index.html">pyfreedb.kv</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="pyfreedb.providers" href="providers/index.html">pyfreedb.providers</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="pyfreedb.row" href="row/index.html">pyfreedb.row</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 </section>
 <section>
 </section>
@@ -70,13 +158,9 @@ __version__ = &#34;1.0.1&#34;</code></pre>
 <ul></ul>
 </div>
 <ul id="index">
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
+<li><h3>Super-module</h3>
 <ul>
-<li><code><a title="pyfreedb.base" href="base.html">pyfreedb.base</a></code></li>
-<li><code><a title="pyfreedb.codec" href="codec.html">pyfreedb.codec</a></code></li>
-<li><code><a title="pyfreedb.kv" href="kv/index.html">pyfreedb.kv</a></code></li>
-<li><code><a title="pyfreedb.providers" href="providers/index.html">pyfreedb.providers</a></code></li>
-<li><code><a title="pyfreedb.row" href="row/index.html">pyfreedb.row</a></code></li>
+<li><code><a title="pyfreedb.providers.google.sheet" href="index.html">pyfreedb.providers.google.sheet</a></code></li>
 </ul>
 </li>
 </ul>

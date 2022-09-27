@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>pyfreedb.providers.google API documentation</title>
+<title>pyfreedb.providers.google.auth.oauth API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,33 +19,97 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>pyfreedb.providers.google</code></h1>
+<h1 class="title">Module <code>pyfreedb.providers.google.auth.oauth</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from typing import List
+<pre><code class="python">import os
+from typing import Dict, List, Optional
 
-from .auth.oauth import OAuth2GoogleAuthClient
-from .auth.service_account import ServiceAccountGoogleAuthClient
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 
-__all__: List[str] = [&#34;OAuth2GoogleAuthClient&#34;, &#34;ServiceAccountGoogleAuthClient&#34;]</code></pre>
+from .base import GoogleAuthClient
+
+
+class OAuth2GoogleAuthClient(GoogleAuthClient):
+    def __init__(self, creds: Credentials) -&gt; None:
+        &#34;&#34;&#34;Initialise auth client instance to perform authentication using OAuth2.
+
+        Client is recommended to not instantiate this class directly, use `from_authorized_user_info` and
+        `from_authorized_user_file` constructor instead.
+        &#34;&#34;&#34;
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+
+        self._creds = creds
+
+    @classmethod
+    def from_authorized_user_info(
+        cls,
+        authorized_user_info: Dict[str, str],
+        scopes: Optional[List[str]] = None,
+    ) -&gt; &#34;OAuth2GoogleAuthClient&#34;:
+        &#34;&#34;&#34;Initialise the auth client using the provided dict.
+
+        Args:
+            authorized_user_info: The user authentication info in dict form.
+            scopes: List of permitted operation by the authentication info.
+
+        Returns:
+            OAuth2GoogleAuthClient: The auth client instance.
+        &#34;&#34;&#34;
+        creds = Credentials.from_authorized_user_info(authorized_user_info, scopes=scopes)
+        return cls(creds)
+
+    @classmethod
+    def from_authorized_user_file(
+        cls,
+        authorized_user_file: str,
+        client_secret_filename: Optional[str] = None,
+        scopes: Optional[List[str]] = None,
+    ) -&gt; &#34;OAuth2GoogleAuthClient&#34;:
+        &#34;&#34;&#34;Initialise the auth client by reading the authentication info from files.
+
+        If the file given in `authorized_user_file` is not found we will trigger the OAuth2 authentication flow (that
+        requires interaction via browser) and will save the authentication info in the given `authorized_user_file.
+
+        Args:
+            authorized_user_file: The filename of the user authentication info.
+            client_secret_filename: The service secret file (obtainable from the Google Credential dashboard).
+            scopes: List of permitted operation by the authentication info.
+
+        Returns:
+            OAuth2GoogleAuthClient: The auth client instance.
+        &#34;&#34;&#34;
+        if os.path.exists(authorized_user_file):
+            creds = Credentials.from_authorized_user_file(authorized_user_file, scopes=scopes)
+            return cls(creds)
+
+        if not client_secret_filename:
+            raise ValueError(&#34;client_secret_filename must be set if authorized_user_file is not exists&#34;)
+
+        flow = InstalledAppFlow.from_client_secrets_file(client_secret_filename, scopes=scopes)
+        creds = flow.run_local_server(port=0)
+        with open(authorized_user_file, &#34;w&#34;) as user_file:
+            user_file.write(creds.to_json())
+
+        return cls(creds)
+
+    def credentials(self) -&gt; Credentials:
+        &#34;&#34;&#34;Returns the authenticated Google credentials.
+
+        Returns:
+            google.oauth2.credentials.Credentials: The authenticated Google credentials.
+        &#34;&#34;&#34;
+        return self._creds</code></pre>
 </details>
 </section>
 <section>
-<h2 class="section-title" id="header-submodules">Sub-modules</h2>
-<dl>
-<dt><code class="name"><a title="pyfreedb.providers.google.auth" href="auth/index.html">pyfreedb.providers.google.auth</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="pyfreedb.providers.google.sheet" href="sheet/index.html">pyfreedb.providers.google.sheet</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 </section>
 <section>
 </section>
@@ -54,7 +118,7 @@ __all__: List[str] = [&#34;OAuth2GoogleAuthClient&#34;, &#34;ServiceAccountGoogl
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="pyfreedb.providers.google.OAuth2GoogleAuthClient"><code class="flex name class">
+<dt id="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient"><code class="flex name class">
 <span>class <span class="ident">OAuth2GoogleAuthClient</span></span>
 <span>(</span><span>creds: google.oauth2.credentials.Credentials)</span>
 </code></dt>
@@ -141,13 +205,13 @@ __all__: List[str] = [&#34;OAuth2GoogleAuthClient&#34;, &#34;ServiceAccountGoogl
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="pyfreedb.providers.google.auth.base.GoogleAuthClient" href="auth/base.html#pyfreedb.providers.google.auth.base.GoogleAuthClient">GoogleAuthClient</a></li>
+<li><a title="pyfreedb.providers.google.auth.base.GoogleAuthClient" href="base.html#pyfreedb.providers.google.auth.base.GoogleAuthClient">GoogleAuthClient</a></li>
 <li>abc.ABC</li>
 </ul>
 <h3>Static methods</h3>
 <dl>
-<dt id="pyfreedb.providers.google.OAuth2GoogleAuthClient.from_authorized_user_file"><code class="name flex">
-<span>def <span class="ident">from_authorized_user_file</span></span>(<span>authorized_user_file: str, client_secret_filename: Optional[str] = None, scopes: Optional[List[str]] = None) ‑> <a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient" href="auth/oauth.html#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></span>
+<dt id="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.from_authorized_user_file"><code class="name flex">
+<span>def <span class="ident">from_authorized_user_file</span></span>(<span>authorized_user_file: str, client_secret_filename: Optional[str] = None, scopes: Optional[List[str]] = None) ‑> <a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Initialise the auth client by reading the authentication info from files.</p>
@@ -164,7 +228,7 @@ requires interaction via browser) and will save the authentication info in the g
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code><a title="pyfreedb.providers.google.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></code></dt>
+<dt><code><a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></code></dt>
 <dd>The auth client instance.</dd>
 </dl></div>
 <details class="source">
@@ -206,8 +270,8 @@ def from_authorized_user_file(
     return cls(creds)</code></pre>
 </details>
 </dd>
-<dt id="pyfreedb.providers.google.OAuth2GoogleAuthClient.from_authorized_user_info"><code class="name flex">
-<span>def <span class="ident">from_authorized_user_info</span></span>(<span>authorized_user_info: Dict[str, str], scopes: Optional[List[str]] = None) ‑> <a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient" href="auth/oauth.html#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></span>
+<dt id="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.from_authorized_user_info"><code class="name flex">
+<span>def <span class="ident">from_authorized_user_info</span></span>(<span>authorized_user_info: Dict[str, str], scopes: Optional[List[str]] = None) ‑> <a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Initialise the auth client using the provided dict.</p>
@@ -220,7 +284,7 @@ def from_authorized_user_file(
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code><a title="pyfreedb.providers.google.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></code></dt>
+<dt><code><a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></code></dt>
 <dd>The auth client instance.</dd>
 </dl></div>
 <details class="source">
@@ -249,7 +313,7 @@ def from_authorized_user_info(
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="pyfreedb.providers.google.OAuth2GoogleAuthClient.credentials"><code class="name flex">
+<dt id="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.credentials"><code class="name flex">
 <span>def <span class="ident">credentials</span></span>(<span>self) ‑> google.oauth2.credentials.Credentials</span>
 </code></dt>
 <dd>
@@ -274,187 +338,6 @@ def from_authorized_user_info(
 </dd>
 </dl>
 </dd>
-<dt id="pyfreedb.providers.google.ServiceAccountGoogleAuthClient"><code class="flex name class">
-<span>class <span class="ident">ServiceAccountGoogleAuthClient</span></span>
-<span>(</span><span>creds: google.oauth2.service_account.Credentials)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>An abstraction layer that represents way to authenticate with Google APIs.</p>
-<p>Initialise auth client instance to perform authentication using Service Account.</p>
-<p>Client is recommended to not instantiate this class directly, use <code>from_service_account_info</code> and
-<code>from_service_account_file</code> constructor instead.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ServiceAccountGoogleAuthClient(GoogleAuthClient):
-    def __init__(self, creds: service_account.Credentials) -&gt; None:
-        &#34;&#34;&#34;Initialise auth client instance to perform authentication using Service Account.
-
-        Client is recommended to not instantiate this class directly, use `from_service_account_info` and
-        `from_service_account_file` constructor instead.
-        &#34;&#34;&#34;
-        self._creds = creds
-
-    @classmethod
-    def from_service_account_info(
-        cls,
-        service_account_info: Dict[str, str],
-        scopes: Optional[List[str]] = None,
-    ) -&gt; &#34;ServiceAccountGoogleAuthClient&#34;:
-        &#34;&#34;&#34;Initialise the auth client using the provided service account dict.
-
-        Args:
-            service_account_info: The service account info in dict form.
-            scopes: List of permitted operation by the authentication info.
-
-        Returns:
-            ServiceAccountGoogleAuthClient: The auth client instance.
-        &#34;&#34;&#34;
-        creds = service_account.Credentials.from_service_account_info(service_account_info, scopes=scopes)
-        return cls(creds)
-
-    @classmethod
-    def from_service_account_file(
-        cls,
-        filename: str,
-        scopes: Optional[List[str]] = None,
-    ) -&gt; &#34;ServiceAccountGoogleAuthClient&#34;:
-        &#34;&#34;&#34;Initialise the auth client by reading the service account info from a file.
-
-        Args:
-            filename: The path to file that contains the service account info.
-            scopes: List of permitted operation by the authentication info.
-
-        Returns:
-            ServiceAccountGoogleAuthClient: The auth client instance.
-        &#34;&#34;&#34;
-        creds = service_account.Credentials.from_service_account_file(filename, scopes=scopes)
-        return cls(creds)
-
-    def credentials(self) -&gt; service_account.Credentials:
-        &#34;&#34;&#34;Returns the authenticated Google credentials.
-
-        Returns:
-            google.oauth2.service_account.Credentials: The authenticated Google credentials.
-        &#34;&#34;&#34;
-        return self._creds</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="pyfreedb.providers.google.auth.base.GoogleAuthClient" href="auth/base.html#pyfreedb.providers.google.auth.base.GoogleAuthClient">GoogleAuthClient</a></li>
-<li>abc.ABC</li>
-</ul>
-<h3>Static methods</h3>
-<dl>
-<dt id="pyfreedb.providers.google.ServiceAccountGoogleAuthClient.from_service_account_file"><code class="name flex">
-<span>def <span class="ident">from_service_account_file</span></span>(<span>filename: str, scopes: Optional[List[str]] = None) ‑> <a title="pyfreedb.providers.google.auth.service_account.ServiceAccountGoogleAuthClient" href="auth/service_account.html#pyfreedb.providers.google.auth.service_account.ServiceAccountGoogleAuthClient">ServiceAccountGoogleAuthClient</a></span>
-</code></dt>
-<dd>
-<div class="desc"><p>Initialise the auth client by reading the service account info from a file.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>filename</code></strong></dt>
-<dd>The path to file that contains the service account info.</dd>
-<dt><strong><code>scopes</code></strong></dt>
-<dd>List of permitted operation by the authentication info.</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code><a title="pyfreedb.providers.google.ServiceAccountGoogleAuthClient" href="#pyfreedb.providers.google.ServiceAccountGoogleAuthClient">ServiceAccountGoogleAuthClient</a></code></dt>
-<dd>The auth client instance.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@classmethod
-def from_service_account_file(
-    cls,
-    filename: str,
-    scopes: Optional[List[str]] = None,
-) -&gt; &#34;ServiceAccountGoogleAuthClient&#34;:
-    &#34;&#34;&#34;Initialise the auth client by reading the service account info from a file.
-
-    Args:
-        filename: The path to file that contains the service account info.
-        scopes: List of permitted operation by the authentication info.
-
-    Returns:
-        ServiceAccountGoogleAuthClient: The auth client instance.
-    &#34;&#34;&#34;
-    creds = service_account.Credentials.from_service_account_file(filename, scopes=scopes)
-    return cls(creds)</code></pre>
-</details>
-</dd>
-<dt id="pyfreedb.providers.google.ServiceAccountGoogleAuthClient.from_service_account_info"><code class="name flex">
-<span>def <span class="ident">from_service_account_info</span></span>(<span>service_account_info: Dict[str, str], scopes: Optional[List[str]] = None) ‑> <a title="pyfreedb.providers.google.auth.service_account.ServiceAccountGoogleAuthClient" href="auth/service_account.html#pyfreedb.providers.google.auth.service_account.ServiceAccountGoogleAuthClient">ServiceAccountGoogleAuthClient</a></span>
-</code></dt>
-<dd>
-<div class="desc"><p>Initialise the auth client using the provided service account dict.</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>service_account_info</code></strong></dt>
-<dd>The service account info in dict form.</dd>
-<dt><strong><code>scopes</code></strong></dt>
-<dd>List of permitted operation by the authentication info.</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code><a title="pyfreedb.providers.google.ServiceAccountGoogleAuthClient" href="#pyfreedb.providers.google.ServiceAccountGoogleAuthClient">ServiceAccountGoogleAuthClient</a></code></dt>
-<dd>The auth client instance.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@classmethod
-def from_service_account_info(
-    cls,
-    service_account_info: Dict[str, str],
-    scopes: Optional[List[str]] = None,
-) -&gt; &#34;ServiceAccountGoogleAuthClient&#34;:
-    &#34;&#34;&#34;Initialise the auth client using the provided service account dict.
-
-    Args:
-        service_account_info: The service account info in dict form.
-        scopes: List of permitted operation by the authentication info.
-
-    Returns:
-        ServiceAccountGoogleAuthClient: The auth client instance.
-    &#34;&#34;&#34;
-    creds = service_account.Credentials.from_service_account_info(service_account_info, scopes=scopes)
-    return cls(creds)</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="pyfreedb.providers.google.ServiceAccountGoogleAuthClient.credentials"><code class="name flex">
-<span>def <span class="ident">credentials</span></span>(<span>self) ‑> google.oauth2.service_account.Credentials</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Returns the authenticated Google credentials.</p>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>google.oauth2.service_account.Credentials</code></dt>
-<dd>The authenticated Google credentials.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def credentials(self) -&gt; service_account.Credentials:
-    &#34;&#34;&#34;Returns the authenticated Google credentials.
-
-    Returns:
-        google.oauth2.service_account.Credentials: The authenticated Google credentials.
-    &#34;&#34;&#34;
-    return self._creds</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
 </dl>
 </section>
 </article>
@@ -466,31 +349,17 @@ def from_service_account_info(
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="pyfreedb.providers" href="../index.html">pyfreedb.providers</a></code></li>
-</ul>
-</li>
-<li><h3><a href="#header-submodules">Sub-modules</a></h3>
-<ul>
-<li><code><a title="pyfreedb.providers.google.auth" href="auth/index.html">pyfreedb.providers.google.auth</a></code></li>
-<li><code><a title="pyfreedb.providers.google.sheet" href="sheet/index.html">pyfreedb.providers.google.sheet</a></code></li>
+<li><code><a title="pyfreedb.providers.google.auth" href="index.html">pyfreedb.providers.google.auth</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="pyfreedb.providers.google.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></code></h4>
+<h4><code><a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient">OAuth2GoogleAuthClient</a></code></h4>
 <ul class="">
-<li><code><a title="pyfreedb.providers.google.OAuth2GoogleAuthClient.credentials" href="#pyfreedb.providers.google.OAuth2GoogleAuthClient.credentials">credentials</a></code></li>
-<li><code><a title="pyfreedb.providers.google.OAuth2GoogleAuthClient.from_authorized_user_file" href="#pyfreedb.providers.google.OAuth2GoogleAuthClient.from_authorized_user_file">from_authorized_user_file</a></code></li>
-<li><code><a title="pyfreedb.providers.google.OAuth2GoogleAuthClient.from_authorized_user_info" href="#pyfreedb.providers.google.OAuth2GoogleAuthClient.from_authorized_user_info">from_authorized_user_info</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="pyfreedb.providers.google.ServiceAccountGoogleAuthClient" href="#pyfreedb.providers.google.ServiceAccountGoogleAuthClient">ServiceAccountGoogleAuthClient</a></code></h4>
-<ul class="">
-<li><code><a title="pyfreedb.providers.google.ServiceAccountGoogleAuthClient.credentials" href="#pyfreedb.providers.google.ServiceAccountGoogleAuthClient.credentials">credentials</a></code></li>
-<li><code><a title="pyfreedb.providers.google.ServiceAccountGoogleAuthClient.from_service_account_file" href="#pyfreedb.providers.google.ServiceAccountGoogleAuthClient.from_service_account_file">from_service_account_file</a></code></li>
-<li><code><a title="pyfreedb.providers.google.ServiceAccountGoogleAuthClient.from_service_account_info" href="#pyfreedb.providers.google.ServiceAccountGoogleAuthClient.from_service_account_info">from_service_account_info</a></code></li>
+<li><code><a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.credentials" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.credentials">credentials</a></code></li>
+<li><code><a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.from_authorized_user_file" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.from_authorized_user_file">from_authorized_user_file</a></code></li>
+<li><code><a title="pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.from_authorized_user_info" href="#pyfreedb.providers.google.auth.oauth.OAuth2GoogleAuthClient.from_authorized_user_info">from_authorized_user_info</a></code></li>
 </ul>
 </li>
 </ul>
