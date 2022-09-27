@@ -35,7 +35,7 @@ class _Field(Generic[T]):
         return cast(Optional[T], value)
 
     def __set__(self, obj: Any, value: Optional[T]) -> None:
-        self.__ensure_type(value)
+        self._ensure_type(value)
         if value is not NotSet:
             # We need to typecast the value to field's _typ because for number types the value will be returned
             # as float by Google Sheet's API.
@@ -43,12 +43,8 @@ class _Field(Generic[T]):
 
         return setattr(obj._data, self._field_name, value)
 
-    def __ensure_type(self, value: Any) -> None:
+    def _ensure_type(self, value: Any) -> None:
         if value is None or value is NotSet:
-            return
-
-        should_return = self.__ensure_number_types(value)
-        if should_return:
             return
 
         if isinstance(value, self._typ):
@@ -56,23 +52,26 @@ class _Field(Generic[T]):
 
         raise TypeError(f"value of field {self._field_name} has the wrong type")
 
-    def __ensure_number_types(self, value: Any) -> bool:
-        if self._typ is int and not _is_ieee754_safe_integer(value):
+
+class _NumberField(_Field[T]):
+    def _ensure_type(self, value: Any) -> None:
+        if value is None or value is NotSet:
+            return
+
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"value of field {self._field_name} has the wrong type")
+
+        if isinstance(value, int) and not _is_ieee754_safe_integer(value):
             raise ValueError("f{value} can't be exactly stored as number. Use string instead to avoid precision loss.")
 
-        if self._typ is int or self._typ is float and isinstance(value, (int, float)):
-            return True
 
-        return False
-
-
-class IntegerField(_Field[int]):
+class IntegerField(_NumberField[int]):
     """A field for integer number values."""
 
     _typ = int
 
 
-class FloatField(_Field[float]):
+class FloatField(_NumberField[float]):
     """A field for storing floating point number values."""
 
     _typ = float

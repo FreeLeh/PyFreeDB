@@ -44,6 +44,13 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> None:
     rows = row_store.select().where("dob = ?", "1999-01-01").execute()
     assert rows == [Customer(name="name1", age=10, dob="1999-01-01")]
 
+    # Need to check for types during update.
+    try:
+        rows_changed = row_store.update({"name": 4}).where("age = ?", 10).execute()
+        pytest.fail("should raise TypeError")
+    except TypeError:
+        pass
+
     # Update one of the row, expects only 1 rows that changed.
     rows_changed = row_store.update({"name": "name4"}).where("age = ?", 10).execute()
     assert rows_changed == 1
