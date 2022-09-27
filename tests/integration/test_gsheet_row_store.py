@@ -12,7 +12,7 @@ class Customer(models.Model):
 
 
 @pytest.mark.integration
-def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSheetRowStore:
+def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> None:
     row_store = GoogleSheetRowStore(
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
@@ -27,9 +27,9 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
 
     # Insert some data, expects no exception raised.
     rows = [
-        Customer(name="name1", age=10, dob="1-1-1999"),
-        Customer(name="name2", age=11, dob="1-1-2000"),
-        Customer(name="name3", age=12, dob="1-1-2001"),
+        Customer(name="name1", age=10, dob="1999-01-01"),
+        Customer(name="name2", age=11, dob="2000-01-01"),
+        Customer(name="name3", age=12, dob="2001-01-01"),
     ]
     row_store.insert(rows).execute()
 
@@ -41,12 +41,22 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
     rows = row_store.select("name", "age").where("age < ? AND age > ?", 12, 10).execute()
     assert rows == [Customer(name="name2", age=11)]
 
+    rows = row_store.select().where("dob = ?", "1999-01-01").execute()
+    assert rows == [Customer(name="name1", age=10, dob="1999-01-01")]
+
+    # Need to check for types during update.
+    try:
+        rows_changed = row_store.update({"name": 4}).where("age = ?", 10).execute()
+        pytest.fail("should raise TypeError")
+    except TypeError:
+        pass
+
     # Update one of the row, expects only 1 rows that changed.
     rows_changed = row_store.update({"name": "name4"}).where("age = ?", 10).execute()
     assert rows_changed == 1
 
     # If no where clause, update all.
-    rows_changed = row_store.update({"dob": "1-1-2002"}).execute()
+    rows_changed = row_store.update({"dob": "2002-01-01"}).execute()
     assert rows_changed == 3
 
     # It should reflect the previous update and return in descending order by age.
@@ -69,3 +79,42 @@ def test_gsheet_row_store_integration(config: IntegrationTestConfig) -> GoogleSh
 
     rows = row_store.select("name").execute()
     assert rows == []
+
+
+class Model(models.Model):
+    integer_field = models.IntegerField()
+    float_field = models.FloatField()
+
+
+@pytest.mark.integration
+def test_gsheet_row_number_boundaries(config: IntegrationTestConfig) -> None:
+    row_store = GoogleSheetRowStore(
+        config.auth_client,
+        spreadsheet_id=config.spreadsheet_id,
+        sheet_name="row_store_edge_cases",
+        object_cls=Model,
+    )
+
+    inserted_rows = [
+        Model(integer_field=1, float_field=1.0),
+        # 2^53 and Max. double value.
+        Model(integer_field=9007199254740992, float_field=1.7976931348623157),
+    ]
+    row_store.insert(inserted_rows).execute()
+
+    expected_rows = [
+        Model(integer_field=1, float_field=1.0),
+        Model(integer_field=9007199254740992, float_field=1.7976931348623157),
+    ]
+    returned_rows = row_store.select().execute()
+    assert expected_rows == returned_rows
+
+    affected_rows = (
+        row_store.update({"integer_field": expected_rows[1].integer_field, "float_field": expected_rows[1].float_field})
+        .where("integer_field = ?", 1)
+        .execute()
+    )
+    assert 1 == affected_rows
+
+    returned_rows = row_store.select().limit(1).execute()
+    assert [expected_rows[1]] == returned_rows

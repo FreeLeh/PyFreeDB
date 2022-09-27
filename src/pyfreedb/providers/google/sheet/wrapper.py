@@ -1,7 +1,7 @@
 import json
 from typing import Any, Dict, List, Union
 
-import requests
+from google.auth.transport.requests import AuthorizedSession
 from googleapiclient.discovery import build
 
 from pyfreedb.providers.google.auth.base import GoogleAuthClient
@@ -18,8 +18,8 @@ class _GoogleSheetWrapper:
 
     def __init__(self, auth_client: GoogleAuthClient):
         service = build("sheets", "v4", credentials=auth_client.credentials())
-        self._auth_client = auth_client
         self._svc = service.spreadsheets()
+        self._authed_session = AuthorizedSession(auth_client.credentials())
 
     def create_spreadsheet(self, title: str) -> str:
         resp = self._svc.create(body={"properties": {"title": title}}).execute()
@@ -129,9 +129,6 @@ class _GoogleSheetWrapper:
         return results
 
     def query(self, spreadsheet_id: str, sheet_name: str, query: str, has_header: bool = True) -> List[List[Any]]:
-        auth_token = "Bearer " + self._auth_client.credentials().token
-        headers = {"contentType": "application/json", "Authorization": auth_token}
-
         params: Dict[str, Union[str, int]] = {
             "sheet": sheet_name,
             "tqx": "responseHandler:freeleh",
@@ -140,9 +137,14 @@ class _GoogleSheetWrapper:
         }
 
         url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
-        r = requests.get(url=url, params=params, headers=headers)
-        r.raise_for_status()
-        return self._convert_query_result(r.text)
+        response = self._authed_session.request(
+            "GET",
+            url,
+            headers={"Content-Type": "application/json"},
+            params=params,
+        )
+        response.raise_for_status()
+        return self._convert_query_result(response.text)
 
     def _convert_query_result(self, response: str) -> List[List[Any]]:
         # Remove the schema header -> freeleh({...}).
@@ -173,17 +175,14 @@ class _GoogleSheetWrapper:
         if typ == "boolean":
             return cell["v"]
         elif typ == "number":
-            if "f" in cell:
-                if "." in cell["f"]:
-                    return float(cell["f"])
-
-                return int(cell["f"])
-
-            # Computed data doesn't have raw value, number returned from aggregation will doesn't have `f`.
-            return int(cell["v"])
+            # Internally, google sheet represent number according to IEEE-754.
+            # If the actual value is outside the supported range it will be truncated.
+            return cell["v"]
         elif typ == "string":
             return cell["v"]
         elif typ in ["date", "datetime", "timeofday"]:
+            # By right we will not reach this case because it's impossible for data created by this library
+            # to be typecasted to Date/Datetime/Timeofday.
             return cell["f"]
 
         raise ValueError("cell type {} is not supported".format(typ))

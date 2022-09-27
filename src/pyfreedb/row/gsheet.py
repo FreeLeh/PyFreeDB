@@ -120,9 +120,14 @@ class GoogleSheetRowStore(Generic[T]):
             >>> store.update({"name": "cat"}).execute()
             10
         """
-        for key in update_value:
+        dummy_object = self._object_cls()
+
+        for key, value in update_value.items():
             if key not in self._object_cls._fields:
                 raise ValueError(f"{key} field is not recognised.")
+
+            # Sanity check to see whether we pass the correct type or not. If this step fails we will raise exception.
+            setattr(dummy_object, key, value)
 
         return UpdateStmt(self, update_value)
 
