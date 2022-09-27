@@ -37,6 +37,8 @@ class _Field(Generic[T]):
     def __set__(self, obj: Any, value: Optional[T]) -> None:
         self.__ensure_type(value)
         if value is not NotSet:
+            # We need to typecast the value to field's _typ because for number types the value will be returned
+            # as float by Google Sheet's API.
             value = self._typ(value)  # type: ignore [call-arg]
 
         return setattr(obj._data, self._field_name, value)
