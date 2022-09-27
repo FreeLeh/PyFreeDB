@@ -1,23 +1,17 @@
 from typing import Dict, List, Optional
 
-from google.auth.transport.requests import Request
 from google.oauth2 import service_account
 
 from .base import GoogleAuthClient
 
 
 class ServiceAccountGoogleAuthClient(GoogleAuthClient):
-    def __init__(self, creds: service_account.Credentials, populate_token: bool = True) -> None:
+    def __init__(self, creds: service_account.Credentials) -> None:
         """Initialise auth client instance to perform authentication using Service Account.
 
         Client is recommended to not instantiate this class directly, use `from_service_account_info` and
         `from_service_account_file` constructor instead.
         """
-
-        # Token will not be populated if we don't call refresh.
-        if populate_token:
-            creds.refresh(Request())
-
         self._creds = creds
 
     @classmethod
