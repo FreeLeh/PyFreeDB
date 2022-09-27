@@ -129,8 +129,6 @@ class GoogleSheetRowStore(Generic[T]):
             # Sanity check to see whether we pass the correct type or not. If this step fails we will raise exception.
             setattr(dummy_object, key, value)
 
-
-
         return UpdateStmt(self, update_value)
 
     def delete(self) -> DeleteStmt[T]:

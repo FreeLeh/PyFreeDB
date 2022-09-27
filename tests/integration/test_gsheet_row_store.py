@@ -80,7 +80,7 @@ class Model(models.Model):
 
 
 @pytest.mark.integration
-def test_gsheet_row_edge_cases(config: IntegrationTestConfig) -> None:
+def test_gsheet_row_number_boundaries(config: IntegrationTestConfig) -> None:
     row_store = GoogleSheetRowStore(
         config.auth_client,
         spreadsheet_id=config.spreadsheet_id,
