@@ -90,6 +90,7 @@ def test_gsheet_row_edge_cases(config: IntegrationTestConfig) -> None:
 
     inserted_rows = [
         Model(integer_field=1, float_field=1.0),
+        # 2^53 and Max. double value.
         Model(integer_field=9007199254740992, float_field=1.7976931348623157),
     ]
     row_store.insert(inserted_rows).execute()
