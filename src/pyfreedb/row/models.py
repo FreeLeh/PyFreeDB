@@ -157,7 +157,7 @@ class Model(metaclass=_Meta):
 
 
 def _is_ieee754_safe_integer(value: int) -> bool:
-    return -(1 << 53) <= value <= (1 << 53)
+    return value == int(float(value))
 
 
 __pydoc__ = {}
