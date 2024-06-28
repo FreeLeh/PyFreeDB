@@ -1,7 +1,7 @@
 google-api-python-client==2.51.0
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.5.2
-requests>=2.28, <3
+requests>=2.30, <3
 black==22.3.0
 mypy==0.961
 isort==5.10.1
