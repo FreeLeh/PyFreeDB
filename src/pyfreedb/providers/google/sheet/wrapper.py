@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, List, Union
 
+import requests
 from google.auth.transport.requests import AuthorizedSession
 from googleapiclient.discovery import build
 
@@ -19,7 +20,7 @@ class _GoogleSheetWrapper:
     def __init__(self, auth_client: GoogleAuthClient):
         service = build("sheets", "v4", credentials=auth_client.credentials())
         self._svc = service.spreadsheets()
-        self._authed_session = AuthorizedSession(auth_client.credentials())
+        self._authed_session: AuthorizedSession = AuthorizedSession(auth_client.credentials())
 
     def create_spreadsheet(self, title: str) -> str:
         resp = self._svc.create(body={"properties": {"title": title}}).execute()
@@ -137,7 +138,7 @@ class _GoogleSheetWrapper:
         }
 
         url = "https://docs.google.com/spreadsheets/d/{}/gviz/tq".format(spreadsheet_id)
-        response = self._authed_session.request(
+        response: requests.Response = self._authed_session.request(
             "GET",
             url,
             headers={"Content-Type": "application/json"},
@@ -148,7 +149,7 @@ class _GoogleSheetWrapper:
 
     def _convert_query_result(self, response: str) -> List[List[Any]]:
         # Remove the schema header -> freeleh({...}).
-        # We only care about the JSON inside of the bracket.
+        # We only care about the JSON inside the bracket.
         start, end = response.index("{"), response.rindex("}")
         resp = json.loads(response[start : end + 1])
         cols = resp["table"]["cols"]
