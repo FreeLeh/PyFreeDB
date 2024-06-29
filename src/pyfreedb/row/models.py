@@ -112,7 +112,7 @@ class _Meta(type):
         # Internally, we will store the actual data in a dataclass so that we don't need to deal with the details of
         # how to store the data.
         dataclasses_fields = []
-        for (field_name, field) in fields.items():
+        for field_name, field in fields.items():
             value = dataclasses.field(default=NotSet)
             dataclasses_fields.append((field_name, cast(type, Union[field._typ, NotSet]), value))
 
