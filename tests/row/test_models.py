@@ -89,3 +89,14 @@ def test_is_ieee754_safe_integer() -> None:
     assert not models._is_ieee754_safe_integer(9007199254740993)
 
     assert models._is_ieee754_safe_integer(1 << 54)
+
+
+class FormulaTest(models.Model):
+    string_no_formula = models.StringField(is_formula=False)
+    string_with_formula = models.StringField(is_formula=True)
+
+
+def test_field_is_formula() -> None:
+    f = FormulaTest(string_no_formula="", string_with_formula="")
+    assert not f._fields["string_no_formula"]._is_formula
+    assert f._fields["string_with_formula"]._is_formula

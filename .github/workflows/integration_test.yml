@@ -1,7 +1,7 @@
 name: Integration Test
 on:
-  pull_request_review:
-    types: [submitted]
+  pull_request:
+    types: [opened, synchronize]
 
 env:
   INTEGRATION_TEST_AUTH_JSON: ${{ secrets.INTEGRATION_TEST_AUTH_JSON }}

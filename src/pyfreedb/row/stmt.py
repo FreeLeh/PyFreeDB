@@ -183,8 +183,10 @@ class InsertStmt(Generic[T]):
             # Set _rid value according to the insert protocol.
             raw = ["=ROW()"]
 
-            for field_name in row._fields:
-                value = _escape_val(getattr(row, field_name))
+            for field_name, field in row._fields.items():
+                field_is_formula = field._is_formula
+                raw_value = getattr(row, field_name)
+                value = raw_value if field_is_formula else _escape_val(raw_value)
                 raw.append(value)
 
             raw_values.append(raw)
@@ -246,7 +248,8 @@ class UpdateStmt(Generic[T]):
                 if col not in self._update_values:
                     continue
 
-                value = _escape_val(self._update_values[col])
+                field_is_formula = self._store._object_cls._fields[col]._is_formula
+                value = self._update_values[col] if field_is_formula else _escape_val(self._update_values[col])
                 cell_selector = _A1CellSelector.from_rc(col_idx + 2, row_idx)
                 update_range = _A1Range(self._store._sheet_name, cell_selector, cell_selector)
                 requests.append(_BatchUpdateRowsRequest(update_range, [[value]]))
@@ -320,9 +323,10 @@ def _escape_val(val: Any) -> Any:
     return val
 
 
-__pdoc__ = {}
-__pdoc__["CountStmt"] = CountStmt.__init__.__doc__
-__pdoc__["SelectStmt"] = SelectStmt.__init__.__doc__
-__pdoc__["InsertStmt"] = InsertStmt.__init__.__doc__
-__pdoc__["DeleteStmt"] = DeleteStmt.__init__.__doc__
-__pdoc__["UpdateStmt"] = UpdateStmt.__init__.__doc__
+__pdoc__ = {
+    "CountStmt": CountStmt.__init__.__doc__,
+    "SelectStmt": SelectStmt.__init__.__doc__,
+    "InsertStmt": InsertStmt.__init__.__doc__,
+    "DeleteStmt": DeleteStmt.__init__.__doc__,
+    "UpdateStmt": UpdateStmt.__init__.__doc__,
+}
