@@ -20,13 +20,25 @@ class _Field(Generic[T]):
     _typ: Type[T]
     _column_name: str
     _field_name: str
+    _is_formula: bool
 
-    def __init__(self, column_name: str = "") -> None:
+    def __init__(
+        self,
+        column_name: str = "",
+        is_formula: bool = False,
+    ) -> None:
+        """Defines the internal representation of the model fields.
+        This is where we can put per field custom config as well.
+
+        Args:
+            column_name: an alias of the field name to represent the actual column name in the sheets.
+            is_formula: a boolean indicating if the field is a formula or not. Only applicable for StringField.
+        """
         self._column_name = column_name
+        self._is_formula = is_formula
 
     def __set_name__(self, _: Any, name: str) -> None:
         self._field_name = name
-
         if self._column_name == "":
             self._column_name = name
 
@@ -41,7 +53,12 @@ class _Field(Generic[T]):
             # as float by Google Sheet's API.
             value = self._typ(value)  # type: ignore [call-arg]
 
+        self._ensure_is_formula()
         return setattr(obj._data, self._field_name, value)
+
+    def _ensure_is_formula(self) -> None:
+        if self._is_formula and self._typ is not str:
+            raise TypeError(f"Field {self._field_name} must be a StringField when is_formula is true")
 
     def _ensure_type(self, value: Any) -> None:
         if value is None or value is NotSet:

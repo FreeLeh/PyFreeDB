@@ -1,7 +1,7 @@
 name: Integration Test
 on:
-  pull_request_review:
-    types: [submitted]
+  pull_request:
+    types: [opened, synchronize]
 
 env:
   INTEGRATION_TEST_AUTH_JSON: ${{ secrets.INTEGRATION_TEST_AUTH_JSON }}
@@ -10,6 +10,7 @@ jobs:
   integration_test:
     runs-on: ubuntu-latest
     environment: integration_test
+    if: github.event.review.state == 'approved' || github.event.pull_request.user.login == 'edocsss'
     strategy:
       matrix:
         python-version: ["3.10"]
@@ -24,4 +25,3 @@ jobs:
           cache: "pip"
       - run: ./scripts/dev.sh
       - run: ./scripts/integration_test.sh
-    if: github.event.review.state == 'approved'

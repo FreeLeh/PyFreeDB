@@ -118,3 +118,40 @@ def test_gsheet_row_number_boundaries(config: IntegrationTestConfig) -> None:
 
     returned_rows = row_store.select().limit(1).execute()
     assert [expected_rows[1]] == returned_rows
+
+
+class InsertModel(models.Model):
+    value = models.StringField(is_formula=True)
+
+
+class ReadModel(models.Model):
+    value = models.IntegerField()
+
+
+@pytest.mark.integration
+def test_gsheet_row_formula(config: IntegrationTestConfig) -> None:
+    insert_store = GoogleSheetRowStore(
+        config.auth_client,
+        spreadsheet_id=config.spreadsheet_id,
+        sheet_name="row_store_formula",
+        object_cls=InsertModel,
+    )
+    read_store = GoogleSheetRowStore(
+        config.auth_client,
+        spreadsheet_id=config.spreadsheet_id,
+        sheet_name="row_store_formula",
+        object_cls=ReadModel,
+    )
+
+    rows = [InsertModel(value="=ROW()-1")]
+    insert_store.insert(rows).execute()
+
+    expected_rows = [ReadModel(value=1)]
+    returned_rows = read_store.select().execute()
+    assert expected_rows == returned_rows
+
+    insert_store.update({"value": "=ROW()"}).execute()
+
+    expected_rows = [ReadModel(value=2)]
+    returned_rows = read_store.select().execute()
+    assert expected_rows == returned_rows
